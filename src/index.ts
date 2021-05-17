@@ -5,7 +5,7 @@ import * as fs from 'fs/promises';
 import * as path from 'path';
 import { getStatsDiff } from 'webpack-stats-diff';
 import { markdownTable } from 'markdown-table';
-import { prettyBytes } from 'pretty-bytes';
+import prettyBytes from 'pretty-bytes';
 
 async function assertFileExists(path: string) {
   try {
@@ -40,19 +40,24 @@ async function run() {
       ],
     ]);
 
+    const owner = github.context.repo.owner;
+    const repo = github.context.repo.repo;
     const pullRequestId = github.context.issue.number;
     if (!pullRequestId) {
       throw new Error('Could not find the PR id');
     }
 
     await octokit.issues.createComment({
-      owner: github.context.repo.owner,
-      repo: github.context.repo.repo,
+      owner,
+      repo,
       issue_number: pullRequestId,
-      body: `## Bundle differences
+      body: `# Webpack bundle diff
 ${summaryTable}
 `,
     });
+
+    core.info(`Webpack bundle diff for PR ${repo}#${pullRequestId}`);
+    core.info(summaryTable);
   } catch (error) {
     core.setFailed(error);
   }
