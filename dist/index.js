@@ -2211,13 +2211,6 @@ exports.default = rows => {
 
 /***/ }),
 
-/***/ 225:
-/***/ (function(module) {
-
-module.exports = require("fs/promises");
-
-/***/ }),
-
 /***/ 235:
 /***/ (function(module) {
 
@@ -6653,20 +6646,13 @@ Object.defineProperty(exports, "__esModule", { value: true });
 const core = __importStar(__webpack_require__(470));
 const github = __importStar(__webpack_require__(469));
 const fs_1 = __webpack_require__(747);
-const fs = __importStar(__webpack_require__(225));
 const path = __importStar(__webpack_require__(622));
 const webpack_stats_diff_1 = __webpack_require__(41);
 const markdown_table_1 = __webpack_require__(366);
 const pretty_bytes_1 = __importDefault(__webpack_require__(589));
 function assertFileExists(path) {
     return __awaiter(this, void 0, void 0, function* () {
-        try {
-            const f = yield fs.access(path, fs_1.constants.F_OK);
-            return true;
-        }
-        catch (error) {
-            throw new Error(`${path} does not exist`);
-        }
+        return new Promise((resolve, reject) => fs_1.access(path, fs_1.constants.F_OK, (error) => (error ? reject(new Error(`${path} does not exist`)) : resolve())));
     });
 }
 function run() {

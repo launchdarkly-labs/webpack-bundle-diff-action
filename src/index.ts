@@ -1,19 +1,15 @@
 import * as core from '@actions/core';
 import * as github from '@actions/github';
-import { constants } from 'fs';
-import * as fs from 'fs/promises';
+import { access, constants } from 'fs';
 import * as path from 'path';
 import { getStatsDiff } from 'webpack-stats-diff';
 import { markdownTable } from 'markdown-table';
 import prettyBytes from 'pretty-bytes';
 
 async function assertFileExists(path: string) {
-  try {
-    const f = await fs.access(path, constants.F_OK);
-    return true;
-  } catch (error) {
-    throw new Error(`${path} does not exist`);
-  }
+  return new Promise<void>((resolve, reject) =>
+    access(path, constants.F_OK, (error) => (error ? reject(new Error(`${path} does not exist`)) : resolve())),
+  );
 }
 
 async function run() {
