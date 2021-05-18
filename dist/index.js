@@ -6657,15 +6657,23 @@ function assertFileExists(path) {
 }
 function run() {
     return __awaiter(this, void 0, void 0, function* () {
-        const baseStatsPath = path.resolve(process.cwd(), core.getInput('base-stats-path'));
-        const prStatsPath = path.resolve(process.cwd(), core.getInput('pr-stats-path'));
-        const octokit = github.getOctokit(core.getInput('github-token'));
         try {
-            assertFileExists(baseStatsPath);
-            assertFileExists(prStatsPath);
-            const baseAssets = require(baseStatsPath).assets;
-            const prAssets = require(prStatsPath).assets;
-            const diff = webpack_stats_diff_1.getStatsDiff(baseAssets, prAssets, {});
+            const inputs = {
+                base: core.getInput('base-stats-path'),
+                pr: core.getInput('pr-stats-path'),
+                githubToken: core.getInput('github-token'),
+            };
+            const paths = {
+                base: path.resolve(process.cwd(), inputs.base),
+                pr: path.resolve(process.cwd(), inputs.pr),
+            };
+            assertFileExists(paths.base);
+            assertFileExists(paths.pr);
+            const assets = {
+                base: require(paths.base).assets,
+                pr: require(paths.pr).assets,
+            };
+            const diff = webpack_stats_diff_1.getStatsDiff(assets.base, assets.pr, {});
             const summaryTable = markdown_table_1.markdownTable([
                 ['Old size', 'New size', 'Diff'],
                 [
@@ -6674,6 +6682,7 @@ function run() {
                     `${pretty_bytes_1.default(diff.total.diff)} (${diff.total.diffPercentage.toFixed(2)}%)`,
                 ],
             ]);
+            const octokit = github.getOctokit(inputs.githubToken);
             const owner = github.context.repo.owner;
             const repo = github.context.repo.repo;
             const pullRequestId = github.context.issue.number;
