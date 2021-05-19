@@ -97,8 +97,6 @@ export function getDiff(
     ),
   };
 
-  console.log(byChunkName);
-
   let diff: Record<string, AssetDiff[]> = {
     added: [],
     removed: [],

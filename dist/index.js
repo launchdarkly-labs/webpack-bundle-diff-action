@@ -3849,7 +3849,6 @@ function getDiff(stats, { diffThreshold = DEFAULT_DIFF_THRESHOLD } = {}) {
             // filter out assets that didn't match for some reason
             .filter((entry) => entry.length !== 0)),
     };
-    console.log(byChunkName);
     let diff = {
         added: [],
         removed: [],
