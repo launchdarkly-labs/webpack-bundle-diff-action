@@ -4,12 +4,12 @@ inputs:
   base-stats-path:
     description: 'The path to the json stats file for the base branch'
     required: true
-  pr-stats-path:
+  head-stats-path:
     description: 'The path to the json stats file for the pull request branch'
     required: true
   github-token:
     description: 'The Github token used to comment on pull requests'
     required: true
 runs:
-  using: 'node12'
+  using: 'node14'
   main: 'dist/index.js'

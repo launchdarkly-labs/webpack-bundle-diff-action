@@ -2,13 +2,21 @@ import * as core from '@actions/core';
 import * as github from '@actions/github';
 import { access, constants } from 'fs';
 import * as path from 'path';
-import { getStatsDiff } from 'webpack-stats-diff';
-import { markdownTable } from 'markdown-table';
-import prettyBytes from 'pretty-bytes';
+
+import { getDiff } from './diff';
+import {
+  getAddedTable,
+  getBiggerTable,
+  getRemovedTable,
+  getSmallerTable,
+  getUnchangedTable,
+} from './format';
 
 async function assertFileExists(path: string) {
   return new Promise<void>((resolve, reject) =>
-    access(path, constants.F_OK, (error) => (error ? reject(new Error(`${path} does not exist`)) : resolve())),
+    access(path, constants.F_OK, (error) =>
+      error ? reject(new Error(`${path} does not exist`)) : resolve(),
+    ),
   );
 }
 
@@ -16,33 +24,24 @@ async function run() {
   try {
     const inputs = {
       base: core.getInput('base-stats-path'),
-      pr: core.getInput('pr-stats-path'),
+      head: core.getInput('head-stats-path'),
       githubToken: core.getInput('github-token'),
     };
 
     const paths = {
       base: path.resolve(process.cwd(), inputs.base),
-      pr: path.resolve(process.cwd(), inputs.pr),
+      head: path.resolve(process.cwd(), inputs.head),
     };
 
     assertFileExists(paths.base);
-    assertFileExists(paths.pr);
+    assertFileExists(paths.head);
 
-    const assets = {
-      base: require(paths.base).assets,
-      pr: require(paths.pr).assets,
+    const stats = {
+      base: require(paths.base),
+      head: require(paths.head),
     };
 
-    const diff = getStatsDiff(assets.base, assets.pr, {});
-
-    const summaryTable = markdownTable([
-      ['Old size', 'New size', 'Diff'],
-      [
-        prettyBytes(diff.total.oldSize),
-        prettyBytes(diff.total.newSize),
-        `${prettyBytes(diff.total.diff)} (${diff.total.diffPercentage.toFixed(2)}%)`,
-      ],
-    ]);
+    const diff = getDiff(stats);
 
     const octokit = github.getOctokit(inputs.githubToken);
 
@@ -53,17 +52,30 @@ async function run() {
       throw new Error('Could not find the PR id');
     }
 
+    const body = `### Webpack bundle diff
+
+#### Bundle size increased 🔼
+${getAddedTable(diff.added)}
+
+#### Bundle size decreased 🔽
+${getAddedTable(diff.added)}
+
+#### New bundles 🆕
+${getAddedTable(diff.added)}
+
+#### Removed bundles 🚮
+${getAddedTable(diff.added)}
+`;
+
     await octokit.issues.createComment({
       owner,
       repo,
       issue_number: pullRequestId,
-      body: `# Webpack bundle diff
-${summaryTable}
-`,
+      body,
     });
 
     core.info(`Webpack bundle diff for PR ${repo}#${pullRequestId}`);
-    core.info(summaryTable);
+    core.info(body);
   } catch (error) {
     core.setFailed(error);
   }

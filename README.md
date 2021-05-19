@@ -29,3 +29,23 @@ $ git commit -m 'Commit message'
 ## Random links
 
 Good resource: https://jeffrafter.com/working-with-github-actions/
+
+## Webpack stats data
+
+- [Docs](https://webpack.js.org/api/stats/)
+
+### Playing around with `jq`
+
+There are two sample webpack stats file in this repo: `base-webpack-stats.json` and `head-webpack-stats.json`.
+
+#### Extract asset name and size
+
+```shell
+cat head-webpack-stats.json | jq ".assets[] | {name, size}"
+```
+
+To only match `.js` files,
+
+```shell
+cat head-webpack-stats.json | jq '.assets[] | select(.name | test(".js$")) | {name,size}'
+```
