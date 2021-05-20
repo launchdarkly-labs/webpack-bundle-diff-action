@@ -30,10 +30,8 @@ function renderSection({
   formatter(assets: AssetDiff[]): string;
 }) {
   return `
-<details ${assets.length > 0 ? 'open="true"' : ''}>
-  <summary>${title}</summary>
-  ${assets.length > 0 ? formatter(assets) : 'No relevant assets.'}
-</details>
+#### ${title}
+${assets.length > 0 ? formatter(assets) : 'No relevant assets.'}
 `;
 }
 
@@ -117,8 +115,8 @@ async function run() {
       renderSection({
         title: `🤔 ${diff.added.length} ${pluralize(
           diff.added.length,
-          'bundle',
-          'bundles',
+          'bundle was',
+          'bundles were',
         )} were added`,
         assets: diff.added,
         formatter: getAddedTable,
@@ -127,9 +125,9 @@ async function run() {
       renderSection({
         title: `👏 ${diff.removed.length} ${pluralize(
           diff.removed.length,
-          'bundle',
-          'bundles',
-        )} were removed`,
+          'bundle was',
+          'bundles were',
+        )} removed`,
         assets: diff.removed,
         formatter: getRemovedTable,
       }),

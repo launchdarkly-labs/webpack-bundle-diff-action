@@ -4137,10 +4137,8 @@ async function assertFileExists(path) {
 }
 function renderSection({ title, assets, formatter, }) {
     return `
-<details ${assets.length > 0 ? 'open="true"' : ''}>
-  <summary>${title}</summary>
-  ${assets.length > 0 ? formatter(assets) : 'No relevant assets.'}
-</details>
+#### ${title}
+${assets.length > 0 ? formatter(assets) : 'No relevant assets.'}
 `;
 }
 async function run() {
@@ -4199,12 +4197,12 @@ async function run() {
                 formatter: format_1.getSmallerTable,
             }),
             renderSection({
-                title: `🤔 ${diff.added.length} ${format_1.pluralize(diff.added.length, 'bundle', 'bundles')} were added`,
+                title: `🤔 ${diff.added.length} ${format_1.pluralize(diff.added.length, 'bundle was', 'bundles were')} were added`,
                 assets: diff.added,
                 formatter: format_1.getAddedTable,
             }),
             renderSection({
-                title: `👏 ${diff.removed.length} ${format_1.pluralize(diff.removed.length, 'bundle', 'bundles')} were removed`,
+                title: `👏 ${diff.removed.length} ${format_1.pluralize(diff.removed.length, 'bundle was', 'bundles were')} removed`,
                 assets: diff.removed,
                 formatter: format_1.getRemovedTable,
             }),
