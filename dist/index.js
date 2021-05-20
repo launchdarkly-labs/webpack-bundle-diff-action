@@ -3809,7 +3809,7 @@ exports.getState = getState;
 // support for contenthash, typescript, etc…
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.getDiff = void 0;
-const DEFAULT_DIFF_THRESHOLD = 0.05;
+const DEFAULT_DIFF_THRESHOLD = 0.05; // 5%
 const ASSET_NAME_REGEXP = /^(?<assetname>[a-z0-9\.\-_]+)\.([a-z0-9]{20})\.(?<extension>js|css)$/;
 const parseAssetName = (name) => {
     const match = name.match(ASSET_NAME_REGEXP);
@@ -4150,6 +4150,13 @@ async function run() {
             head: core.getInput('head-stats-path'),
             githubToken: core.getInput('github-token'),
         };
+        const owner = github.context.repo.owner;
+        const repo = github.context.repo.repo;
+        const sha = github.context.sha;
+        const pullRequestId = github.context.issue.number;
+        if (!pullRequestId) {
+            throw new Error('Could not find the PR id');
+        }
         const paths = {
             base: path.resolve(process.cwd(), inputs.base),
             head: path.resolve(process.cwd(), inputs.head),
@@ -4168,33 +4175,35 @@ async function run() {
             bigger: format_1.getAddedTable(diff.bigger),
             unchanged: format_1.getAddedTable(diff.unchanged),
         };
-        const octokit = github.getOctokit(inputs.githubToken);
-        const owner = github.context.repo.owner;
-        const repo = github.context.repo.repo;
-        const sha = github.context.sha;
-        const pullRequestId = github.context.issue.number;
-        if (!pullRequestId) {
-            throw new Error('Could not find the PR id');
+        const numberOfChanges = Object.entries(diff)
+            .map(([kind, assets]) => assets.length)
+            .reduce((total, size) => total + size, 0);
+        // If there are no changes whatsoever, don't report.
+        // Avoid adding noise to backend-only PRs
+        if (numberOfChanges === 0) {
+            core.info(`No bundle changes to report for ${repo}#${pullRequestId}`);
+            return;
         }
+        const octokit = github.getOctokit(inputs.githubToken);
         const body = [
             `### Webpack bundle diff at ${sha}`,
             renderSection({
-                title: '🔼 Bundle size increased',
+                title: `⚠️ ${diff.bigger.length} ${format_1.pluralize(diff.bigger.length, 'bundle', 'bundles')} got bigger`,
                 assets: diff.bigger,
                 formatter: format_1.getBiggerTable,
             }),
             renderSection({
-                title: '🔽 Bundle size decreased',
+                title: `🎉 ${diff.smaller.length} ${format_1.pluralize(diff.smaller.length, 'bundle', 'bundles')} got smaller`,
                 assets: diff.smaller,
                 formatter: format_1.getSmallerTable,
             }),
             renderSection({
-                title: '🆕 New bundles',
+                title: `🤔 ${diff.added.length} ${format_1.pluralize(diff.added.length, 'bundle', 'bundles')} were added`,
                 assets: diff.added,
                 formatter: format_1.getAddedTable,
             }),
             renderSection({
-                title: '🚮 Removed bundles',
+                title: `👏 ${diff.removed.length} ${format_1.pluralize(diff.removed.length, 'bundle', 'bundles')} were removed`,
                 assets: diff.removed,
                 formatter: format_1.getRemovedTable,
             }),
@@ -5132,7 +5141,7 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.getUnchangedTable = exports.getSmallerTable = exports.getBiggerTable = exports.getRemovedTable = exports.getAddedTable = void 0;
+exports.pluralize = exports.getUnchangedTable = exports.getSmallerTable = exports.getBiggerTable = exports.getRemovedTable = exports.getAddedTable = void 0;
 const markdown_table_1 = __importDefault(__webpack_require__(366));
 const pretty_bytes_1 = __importDefault(__webpack_require__(589));
 const formatBytes = (bytes) => pretty_bytes_1.default(bytes);
@@ -5184,6 +5193,19 @@ function getUnchangedTable(assets) {
     ]);
 }
 exports.getUnchangedTable = getUnchangedTable;
+const pluralRules = new Intl.PluralRules('en');
+function pluralize(count, singular, plural) {
+    const rule = pluralRules.select(count);
+    switch (rule) {
+        case 'one':
+            return singular;
+        case 'other':
+            return plural;
+        default:
+            return undefined;
+    }
+}
+exports.pluralize = pluralize;
 
 
 /***/ }),

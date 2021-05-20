@@ -33,7 +33,7 @@ export type Diff = {
   unchanged: AssetDiff[];
 };
 
-const DEFAULT_DIFF_THRESHOLD = 0.05;
+const DEFAULT_DIFF_THRESHOLD = 0.05; // 5%
 
 const ASSET_NAME_REGEXP = /^(?<assetname>[a-z0-9\.\-_]+)\.([a-z0-9]{20})\.(?<extension>js|css)$/;
 

@@ -54,3 +54,18 @@ export function getUnchangedTable(assets: AssetDiff[]) {
     ...assets.map((asset) => [asset.name, formatBytes(asset.headSize)]),
   ]);
 }
+
+const pluralRules = new Intl.PluralRules('en');
+
+export function pluralize(count: number, singular: string, plural: string) {
+  const rule = pluralRules.select(count);
+
+  switch (rule) {
+    case 'one':
+      return singular;
+    case 'other':
+      return plural;
+    default:
+      return undefined;
+  }
+}

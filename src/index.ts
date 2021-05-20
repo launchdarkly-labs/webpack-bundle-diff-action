@@ -9,6 +9,7 @@ import {
   getBiggerTable,
   getRemovedTable,
   getSmallerTable,
+  pluralize,
 } from './format';
 
 async function assertFileExists(path: string) {
@@ -44,6 +45,14 @@ async function run() {
       githubToken: core.getInput('github-token'),
     };
 
+    const owner = github.context.repo.owner;
+    const repo = github.context.repo.repo;
+    const sha = github.context.sha;
+    const pullRequestId = github.context.issue.number;
+    if (!pullRequestId) {
+      throw new Error('Could not find the PR id');
+    }
+
     const paths = {
       base: path.resolve(process.cwd(), inputs.base),
       head: path.resolve(process.cwd(), inputs.head),
@@ -67,38 +76,57 @@ async function run() {
       unchanged: getAddedTable(diff.unchanged),
     };
 
-    const octokit = github.getOctokit(inputs.githubToken);
+    const numberOfChanges = Object.entries(diff)
+      .map(([kind, assets]) => assets.length)
+      .reduce((total, size) => total + size, 0);
 
-    const owner = github.context.repo.owner;
-    const repo = github.context.repo.repo;
-    const sha = github.context.sha;
-    const pullRequestId = github.context.issue.number;
-    if (!pullRequestId) {
-      throw new Error('Could not find the PR id');
+    // If there are no changes whatsoever, don't report.
+    // Avoid adding noise to backend-only PRs
+    if (numberOfChanges === 0) {
+      core.info(`No bundle changes to report for ${repo}#${pullRequestId}`);
+      return;
     }
+
+    const octokit = github.getOctokit(inputs.githubToken);
 
     const body = [
       `### Webpack bundle diff at ${sha}`,
       renderSection({
-        title: '🔼 Bundle size increased',
+        title: `⚠️ ${diff.bigger.length} ${pluralize(
+          diff.bigger.length,
+          'bundle',
+          'bundles',
+        )} got bigger`,
         assets: diff.bigger,
         formatter: getBiggerTable,
       }),
 
       renderSection({
-        title: '🔽 Bundle size decreased',
+        title: `🎉 ${diff.smaller.length} ${pluralize(
+          diff.smaller.length,
+          'bundle',
+          'bundles',
+        )} got smaller`,
         assets: diff.smaller,
         formatter: getSmallerTable,
       }),
 
       renderSection({
-        title: '🆕 New bundles',
+        title: `🤔 ${diff.added.length} ${pluralize(
+          diff.added.length,
+          'bundle',
+          'bundles',
+        )} were added`,
         assets: diff.added,
         formatter: getAddedTable,
       }),
 
       renderSection({
-        title: '🚮 Removed bundles',
+        title: `👏 ${diff.removed.length} ${pluralize(
+          diff.removed.length,
+          'bundle',
+          'bundles',
+        )} were removed`,
         assets: diff.removed,
         formatter: getRemovedTable,
       }),
