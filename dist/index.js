@@ -4137,7 +4137,7 @@ async function assertFileExists(path) {
 }
 function renderSection({ title, assets, formatter, }) {
     return `
-<details open="${assets.length > 0 ? 'true' : 'false'}">
+<details ${assets.length > 0 ? 'open="true"' : ''}>
   <summary>${title}</summary>
   ${assets.length > 0 ? formatter(assets) : 'No relevant assets.'}
 </details>
@@ -4198,7 +4198,7 @@ async function run() {
                 assets: diff.removed,
                 formatter: format_1.getRemovedTable,
             }),
-        ].join('\n\n');
+        ].join('\n');
         await octokit.issues.createComment({
             owner,
             repo,
