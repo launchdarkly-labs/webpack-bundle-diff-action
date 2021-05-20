@@ -1,3 +1,6 @@
+// Mostly based off of https://github.com/ZachGawlik/webpack-stats-diff/tree/master/src with better
+// support for contenthash, typescript, etc…
+
 import type { StatsCompilation, StatsAsset } from 'webpack';
 
 // We tweak the Webpack stats type to make,

@@ -3,13 +3,12 @@ import * as github from '@actions/github';
 import { access, constants } from 'fs';
 import * as path from 'path';
 
-import { getDiff } from './diff';
+import { AssetDiff, getDiff } from './diff';
 import {
   getAddedTable,
   getBiggerTable,
   getRemovedTable,
   getSmallerTable,
-  getUnchangedTable,
 } from './format';
 
 async function assertFileExists(path: string) {
@@ -18,6 +17,23 @@ async function assertFileExists(path: string) {
       error ? reject(new Error(`${path} does not exist`)) : resolve(),
     ),
   );
+}
+
+function renderSection({
+  title,
+  assets,
+  formatter,
+}: {
+  title: string;
+  assets: AssetDiff[];
+  formatter(assets: AssetDiff[]): string;
+}) {
+  return `
+<details open="${assets.length > 0 ? 'true' : 'false'}">
+  <summary>${title}</summary>
+  ${assets.length > 0 ? formatter(assets) : 'No relevant assets.'}
+</details>
+`;
 }
 
 async function run() {
@@ -43,29 +59,50 @@ async function run() {
 
     const diff = getDiff(stats);
 
+    const tables = {
+      added: getAddedTable(diff.added),
+      removed: getAddedTable(diff.removed),
+      smaller: getAddedTable(diff.smaller),
+      bigger: getAddedTable(diff.bigger),
+      unchanged: getAddedTable(diff.unchanged),
+    };
+
     const octokit = github.getOctokit(inputs.githubToken);
 
     const owner = github.context.repo.owner;
     const repo = github.context.repo.repo;
+    const sha = github.context.sha;
     const pullRequestId = github.context.issue.number;
     if (!pullRequestId) {
       throw new Error('Could not find the PR id');
     }
 
-    const body = `### Webpack bundle diff
+    const body = [
+      `### Webpack bundle diff at ${sha}`,
+      renderSection({
+        title: '🔼 Bundle size increased',
+        assets: diff.bigger,
+        formatter: getBiggerTable,
+      }),
 
-#### Bundle size increased 🔼
-${getAddedTable(diff.added)}
+      renderSection({
+        title: '🔽 Bundle size decreased',
+        assets: diff.smaller,
+        formatter: getSmallerTable,
+      }),
 
-#### Bundle size decreased 🔽
-${getAddedTable(diff.added)}
+      renderSection({
+        title: '🆕 New bundles',
+        assets: diff.added,
+        formatter: getAddedTable,
+      }),
 
-#### New bundles 🆕
-${getAddedTable(diff.added)}
-
-#### Removed bundles 🚮
-${getAddedTable(diff.added)}
-`;
+      renderSection({
+        title: '🚮 Removed bundles',
+        assets: diff.removed,
+        formatter: getRemovedTable,
+      }),
+    ].join('\n\n');
 
     await octokit.issues.createComment({
       owner,
