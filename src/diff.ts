@@ -35,7 +35,7 @@ export type Diff = {
 
 const DEFAULT_DIFF_THRESHOLD = 0.05; // 5%
 
-const ASSET_NAME_REGEXP = /^(?<assetname>[a-z0-9\.\-_]+)\.([a-z0-9]{20})\.(?<extension>js|css)$/;
+const ASSET_NAME_REGEXP = /^(?<assetname>[a-zA-Z0-9\.\-_]+)\.([a-zA-Z0-9]{20})\.(?<extension>js|css)$/;
 
 const parseAssetName = (name: string) => {
   const match = name.match(ASSET_NAME_REGEXP);

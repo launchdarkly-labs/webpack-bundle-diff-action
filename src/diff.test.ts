@@ -38,11 +38,16 @@ const diff = getDiff({
       { name: 'vendor.96885f9121bed7076430.js', size: 677 },
       { name: 'manage-flag.741e6d5a3a2d5b7d0e2a.js', size: 7884 },
       { name: 'manage-flag.f9f60f318897c963f4f0.css', size: 1202 },
-      { name: 'workflow-builder.9ad198b10aae5b5fe929.js', size: 6577 },
-      { name: 'workflow-builder.07de19e11b77ba149d1e.css', size: 4331 },
+      { name: 'Workflow-Builder.9ad198b10aae5b5fe929.js', size: 6577 },
+      { name: 'Workflow-Builder.07de19e11b77ba149d1e.css', size: 4331 },
     ],
   },
 });
+
+// const diff = getDiff({
+//   base: require('../base-webpack-stats.json'),
+//   head: require('../head-webpack-stats.json'),
+// });
 
 test('raw diff', () => {
   expect(diff).toMatchSnapshot();

@@ -1,17 +1,17 @@
 // Jest Snapshot v1, https://goo.gl/fbAQLP
 
 exports[`added diff 1`] = `
-"| Asset                | Size    |
-| -------------------- | ------- |
-| workflow-builder.js  | 6.58 kB |
-| workflow-builder.css | 4.33 kB |"
+"| Asset                  | Size      |
+| ---------------------- | --------- |
+| \`Workflow-Builder.js\`  | \`6.58 kB\` |
+| \`Workflow-Builder.css\` | \`4.33 kB\` |"
 `;
 
 exports[`bigger diff 1`] = `
-"| Asset           | Base size | Head size | Delta   | Delta % |
-| --------------- | --------- | --------- | ------- | ------- |
-| manage-flag.js  | 4.51 kB   | 7.88 kB   | 3.37 kB | 74.7%   |
-| manage-flag.css | 991 B     | 1.2 kB    | 211 B   | 21.29%  |"
+"| Asset             | Base size | Head size | Delta     | Delta %  |
+| ----------------- | --------- | --------- | --------- | -------- |
+| \`manage-flag.js\`  | \`4.51 kB\` | \`7.88 kB\` | \`3.37 kB\` | \`74.7%\`  |
+| \`manage-flag.css\` | \`991 B\`   | \`1.2 kB\`  | \`211 B\`   | \`21.29%\` |"
 `;
 
 exports[`raw diff 1`] = `
@@ -21,14 +21,14 @@ Object {
       "baseSize": 0,
       "delta": 6577,
       "headSize": 6577,
-      "name": "workflow-builder.js",
+      "name": "Workflow-Builder.js",
       "ratio": 1,
     },
     Object {
       "baseSize": 0,
       "delta": 4331,
       "headSize": 4331,
-      "name": "workflow-builder.css",
+      "name": "Workflow-Builder.css",
       "ratio": 1,
     },
   ],
@@ -93,16 +93,16 @@ Object {
 `;
 
 exports[`removed diff 1`] = `
-"| Asset            | Size    |
-| ---------------- | ------- |
-| legacy-modal.css | 3.44 kB |
-| legacy-modal.js  | 1.12 kB |"
+"| Asset              | Size      |
+| ------------------ | --------- |
+| \`legacy-modal.css\` | \`3.44 kB\` |
+| \`legacy-modal.js\`  | \`1.12 kB\` |"
 `;
 
 exports[`smaller diff 1`] = `
-"| Asset  | Base size | Head size | Delta    | Delta % |
-| ------ | --------- | --------- | -------- | ------- |
-| app.js | 94.4 kB   | 75.1 kB   | -19.3 kB | -20.44% |"
+"| Asset    | Base size | Head size | Delta      | Delta %   |
+| -------- | --------- | --------- | ---------- | --------- |
+| \`app.js\` | \`94.4 kB\` | \`75.1 kB\` | \`-19.3 kB\` | \`-20.44%\` |"
 `;
 
 exports[`unchanged diff 1`] = `

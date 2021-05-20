@@ -3810,7 +3810,7 @@ exports.getState = getState;
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.getDiff = void 0;
 const DEFAULT_DIFF_THRESHOLD = 0.05; // 5%
-const ASSET_NAME_REGEXP = /^(?<assetname>[a-z0-9\.\-_]+)\.([a-z0-9]{20})\.(?<extension>js|css)$/;
+const ASSET_NAME_REGEXP = /^(?<assetname>[a-zA-Z0-9\.\-_]+)\.([a-zA-Z0-9]{20})\.(?<extension>js|css)$/;
 const parseAssetName = (name) => {
     const match = name.match(ASSET_NAME_REGEXP);
     if (!match || !match.groups) {
