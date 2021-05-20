@@ -4182,7 +4182,7 @@ async function run() {
         // If there are no changes whatsoever, don't report.
         // Avoid adding noise to backend-only PRs
         if (numberOfChanges === 0) {
-            core.info(`No bundle changes to report for ${repo}#${pullRequestId}`);
+            core.info(`No bundle changes to report for commit ${sha} to ${repo}#${pullRequestId}`);
             return;
         }
         const octokit = github.getOctokit(inputs.githubToken);
