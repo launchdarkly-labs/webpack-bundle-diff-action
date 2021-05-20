@@ -29,10 +29,12 @@ function renderSection({
   assets: AssetDiff[];
   formatter(assets: AssetDiff[]): string;
 }) {
-  return `
+  return assets.length > 0
+    ? `
 #### ${title}
 ${assets.length > 0 ? formatter(assets) : 'No relevant assets.'}
-`;
+`
+    : '';
 }
 
 async function run() {
@@ -43,6 +45,7 @@ async function run() {
       githubToken: core.getInput('github-token'),
     };
 
+    const runId = github.context.runId;
     const owner = github.context.repo.owner;
     const repo = github.context.repo.repo;
     const sha = github.context.sha;
@@ -66,17 +69,9 @@ async function run() {
 
     const diff = getDiff(stats);
 
-    const tables = {
-      added: getAddedTable(diff.added),
-      removed: getAddedTable(diff.removed),
-      smaller: getAddedTable(diff.smaller),
-      bigger: getAddedTable(diff.bigger),
-      unchanged: getAddedTable(diff.unchanged),
-    };
-
     const numberOfChanges = Object.entries(diff)
       .filter(([kind]) => kind !== 'unchanged')
-      .map(([kind, assets]) => assets.length)
+      .map(([_, assets]) => assets.length)
       .reduce((total, size) => total + size, 0);
 
     // If there are no changes whatsoever, don't report.
@@ -117,7 +112,7 @@ async function run() {
           diff.added.length,
           'bundle was',
           'bundles were',
-        )} were added`,
+        )} added`,
         assets: diff.added,
         formatter: getAddedTable,
       }),
@@ -131,7 +126,11 @@ async function run() {
         assets: diff.removed,
         formatter: getRemovedTable,
       }),
-    ].join('\n');
+
+      `[Visit the workflow page](https://github.com/launchdarkly/gonfalon/actions/runs/${runId}) to download the artifacts for this run. You can analyze those with [webpack-bundle-analyzer](https://github.com/webpack-contrib/webpack-bundle-analyzer).`,
+    ]
+      .filter((section) => section !== '')
+      .join('\n');
 
     await octokit.issues.createComment({
       owner,

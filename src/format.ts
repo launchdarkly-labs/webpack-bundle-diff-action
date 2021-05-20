@@ -3,6 +3,10 @@ import prettyBytes from 'pretty-bytes';
 
 import { AssetDiff } from './diff';
 
+const md = {
+  code: (s: string) => `\`${s}\``,
+};
+
 const formatBytes = (bytes: number) => prettyBytes(bytes);
 
 const formatRatio = (ratio: number) =>
@@ -11,14 +15,20 @@ const formatRatio = (ratio: number) =>
 export function getAddedTable(assets: AssetDiff[]) {
   return markdownTable([
     ['Asset', 'Size'],
-    ...assets.map((asset) => [asset.name, formatBytes(asset.headSize)]),
+    ...assets.map((asset) => [
+      md.code(asset.name),
+      md.code(formatBytes(asset.headSize)),
+    ]),
   ]);
 }
 
 export function getRemovedTable(assets: AssetDiff[]) {
   return markdownTable([
     ['Asset', 'Size'],
-    ...assets.map((asset) => [asset.name, formatBytes(asset.baseSize)]),
+    ...assets.map((asset) => [
+      md.code(asset.name),
+      md.code(formatBytes(asset.baseSize)),
+    ]),
   ]);
 }
 
@@ -26,11 +36,11 @@ export function getBiggerTable(assets: AssetDiff[]) {
   return markdownTable([
     ['Asset', 'Base size', 'Head size', 'Delta', 'Delta %'],
     ...assets.map((asset) => [
-      asset.name,
-      formatBytes(asset.baseSize),
-      formatBytes(asset.headSize),
-      formatBytes(asset.delta),
-      formatRatio(asset.ratio),
+      md.code(asset.name),
+      md.code(formatBytes(asset.baseSize)),
+      md.code(formatBytes(asset.headSize)),
+      md.code(formatBytes(asset.delta)),
+      md.code(formatRatio(asset.ratio)),
     ]),
   ]);
 }
@@ -39,11 +49,11 @@ export function getSmallerTable(assets: AssetDiff[]) {
   return markdownTable([
     ['Asset', 'Base size', 'Head size', 'Delta', 'Delta %'],
     ...assets.map((asset) => [
-      asset.name,
-      formatBytes(asset.baseSize),
-      formatBytes(asset.headSize),
-      formatBytes(asset.delta),
-      formatRatio(asset.ratio),
+      md.code(asset.name),
+      md.code(formatBytes(asset.baseSize)),
+      md.code(formatBytes(asset.headSize)),
+      md.code(formatBytes(asset.delta)),
+      md.code(formatRatio(asset.ratio)),
     ]),
   ]);
 }

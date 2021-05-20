@@ -4136,10 +4136,12 @@ async function assertFileExists(path) {
     return new Promise((resolve, reject) => fs_1.access(path, fs_1.constants.F_OK, (error) => error ? reject(new Error(`${path} does not exist`)) : resolve()));
 }
 function renderSection({ title, assets, formatter, }) {
-    return `
+    return assets.length > 0
+        ? `
 #### ${title}
 ${assets.length > 0 ? formatter(assets) : 'No relevant assets.'}
-`;
+`
+        : '';
 }
 async function run() {
     try {
@@ -4148,6 +4150,7 @@ async function run() {
             head: core.getInput('head-stats-path'),
             githubToken: core.getInput('github-token'),
         };
+        const runId = github.context.runId;
         const owner = github.context.repo.owner;
         const repo = github.context.repo.repo;
         const sha = github.context.sha;
@@ -4166,16 +4169,9 @@ async function run() {
             head: require(paths.head),
         };
         const diff = diff_1.getDiff(stats);
-        const tables = {
-            added: format_1.getAddedTable(diff.added),
-            removed: format_1.getAddedTable(diff.removed),
-            smaller: format_1.getAddedTable(diff.smaller),
-            bigger: format_1.getAddedTable(diff.bigger),
-            unchanged: format_1.getAddedTable(diff.unchanged),
-        };
         const numberOfChanges = Object.entries(diff)
             .filter(([kind]) => kind !== 'unchanged')
-            .map(([kind, assets]) => assets.length)
+            .map(([_, assets]) => assets.length)
             .reduce((total, size) => total + size, 0);
         // If there are no changes whatsoever, don't report.
         // Avoid adding noise to backend-only PRs
@@ -4197,7 +4193,7 @@ async function run() {
                 formatter: format_1.getSmallerTable,
             }),
             renderSection({
-                title: `🤔 ${diff.added.length} ${format_1.pluralize(diff.added.length, 'bundle was', 'bundles were')} were added`,
+                title: `🤔 ${diff.added.length} ${format_1.pluralize(diff.added.length, 'bundle was', 'bundles were')} added`,
                 assets: diff.added,
                 formatter: format_1.getAddedTable,
             }),
@@ -4206,7 +4202,10 @@ async function run() {
                 assets: diff.removed,
                 formatter: format_1.getRemovedTable,
             }),
-        ].join('\n');
+            `[Visit the workflow page](https://github.com/launchdarkly/gonfalon/actions/runs/${runId}) to download the artifacts for this run. You can analyze those with [webpack-bundle-analyzer](https://github.com/webpack-contrib/webpack-bundle-analyzer).`,
+        ]
+            .filter((section) => section !== '')
+            .join('\n');
         await octokit.issues.createComment({
             owner,
             repo,
@@ -5143,19 +5142,28 @@ Object.defineProperty(exports, "__esModule", { value: true });
 exports.pluralize = exports.getUnchangedTable = exports.getSmallerTable = exports.getBiggerTable = exports.getRemovedTable = exports.getAddedTable = void 0;
 const markdown_table_1 = __importDefault(__webpack_require__(366));
 const pretty_bytes_1 = __importDefault(__webpack_require__(589));
+const md = {
+    code: (s) => `\`${s}\``,
+};
 const formatBytes = (bytes) => pretty_bytes_1.default(bytes);
 const formatRatio = (ratio) => ratio.toLocaleString('en', { style: 'percent', maximumFractionDigits: 2 });
 function getAddedTable(assets) {
     return markdown_table_1.default([
         ['Asset', 'Size'],
-        ...assets.map((asset) => [asset.name, formatBytes(asset.headSize)]),
+        ...assets.map((asset) => [
+            md.code(asset.name),
+            md.code(formatBytes(asset.headSize)),
+        ]),
     ]);
 }
 exports.getAddedTable = getAddedTable;
 function getRemovedTable(assets) {
     return markdown_table_1.default([
         ['Asset', 'Size'],
-        ...assets.map((asset) => [asset.name, formatBytes(asset.baseSize)]),
+        ...assets.map((asset) => [
+            md.code(asset.name),
+            md.code(formatBytes(asset.baseSize)),
+        ]),
     ]);
 }
 exports.getRemovedTable = getRemovedTable;
@@ -5163,11 +5171,11 @@ function getBiggerTable(assets) {
     return markdown_table_1.default([
         ['Asset', 'Base size', 'Head size', 'Delta', 'Delta %'],
         ...assets.map((asset) => [
-            asset.name,
-            formatBytes(asset.baseSize),
-            formatBytes(asset.headSize),
-            formatBytes(asset.delta),
-            formatRatio(asset.ratio),
+            md.code(asset.name),
+            md.code(formatBytes(asset.baseSize)),
+            md.code(formatBytes(asset.headSize)),
+            md.code(formatBytes(asset.delta)),
+            md.code(formatRatio(asset.ratio)),
         ]),
     ]);
 }
@@ -5176,11 +5184,11 @@ function getSmallerTable(assets) {
     return markdown_table_1.default([
         ['Asset', 'Base size', 'Head size', 'Delta', 'Delta %'],
         ...assets.map((asset) => [
-            asset.name,
-            formatBytes(asset.baseSize),
-            formatBytes(asset.headSize),
-            formatBytes(asset.delta),
-            formatRatio(asset.ratio),
+            md.code(asset.name),
+            md.code(formatBytes(asset.baseSize)),
+            md.code(formatBytes(asset.headSize)),
+            md.code(formatBytes(asset.delta)),
+            md.code(formatRatio(asset.ratio)),
         ]),
     ]);
 }
