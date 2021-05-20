@@ -4176,6 +4176,7 @@ async function run() {
             unchanged: format_1.getAddedTable(diff.unchanged),
         };
         const numberOfChanges = Object.entries(diff)
+            .filter(([kind]) => kind !== 'unchanged')
             .map(([kind, assets]) => assets.length)
             .reduce((total, size) => total + size, 0);
         // If there are no changes whatsoever, don't report.

@@ -77,6 +77,7 @@ async function run() {
     };
 
     const numberOfChanges = Object.entries(diff)
+      .filter(([kind]) => kind !== 'unchanged')
       .map(([kind, assets]) => assets.length)
       .reduce((total, size) => total + size, 0);
 
