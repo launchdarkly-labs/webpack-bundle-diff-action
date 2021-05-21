@@ -8,7 +8,7 @@ exports[`added diff 1`] = `
 `;
 
 exports[`bigger diff 1`] = `
-"| Asset                              | Base size | Head size | Delta     | Delta %    |
+"| Asset                              | Base size | Head size | Delta ▾   | Delta %    |
 | ---------------------------------- | --------- | --------- | --------- | ---------- |
 | \`ManageFlagVariationsContainer.js\` | \`34.8 kB\` | \`682 kB\`  | \`647 kB\`  | \`1,861.1%\` |
 | \`common.js\`                        | \`268 kB\`  | \`544 kB\`  | \`276 kB\`  | \`102.86%\`  |
@@ -21,7 +21,7 @@ exports[`removed diff 1`] = `
 `;
 
 exports[`smaller diff 1`] = `
-"| Asset                                | Base size | Head size | Delta      | Delta %   |
+"| Asset                                | Base size | Head size | Delta ▾    | Delta %   |
 | ------------------------------------ | --------- | --------- | ---------- | --------- |
 | \`ManageFlagContainer.js\`             | \`1.02 MB\` | \`30.4 kB\` | \`-985 kB\`  | \`-97.01%\` |
 | \`users.entry.js\`                     | \`1.01 MB\` | \`737 kB\`  | \`-276 kB\`  | \`-27.23%\` |

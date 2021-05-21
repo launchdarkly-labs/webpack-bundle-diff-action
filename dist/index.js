@@ -5216,7 +5216,7 @@ function getRemovedTable(assets) {
 exports.getRemovedTable = getRemovedTable;
 function getBiggerTable(assets) {
     return markdown_table_1.default([
-        ['Asset', 'Base size', 'Head size', 'Delta', 'Delta %'],
+        ['Asset', 'Base size', 'Head size', 'Delta ▾', 'Delta %'],
         ...assets.map((asset) => [
             md.code(asset.name),
             md.code(formatBytes(asset.baseSize)),
@@ -5229,7 +5229,7 @@ function getBiggerTable(assets) {
 exports.getBiggerTable = getBiggerTable;
 function getSmallerTable(assets) {
     return markdown_table_1.default([
-        ['Asset', 'Base size', 'Head size', 'Delta', 'Delta %'],
+        ['Asset', 'Base size', 'Head size', 'Delta ▾', 'Delta %'],
         ...assets.map((asset) => [
             md.code(asset.name),
             md.code(formatBytes(asset.baseSize)),

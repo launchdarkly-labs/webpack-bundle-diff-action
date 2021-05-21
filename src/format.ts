@@ -34,7 +34,7 @@ export function getRemovedTable(assets: AssetDiff[]) {
 
 export function getBiggerTable(assets: AssetDiff[]) {
   return markdownTable([
-    ['Asset', 'Base size', 'Head size', 'Delta', 'Delta %'],
+    ['Asset', 'Base size', 'Head size', 'Delta ▾', 'Delta %'],
     ...assets.map((asset) => [
       md.code(asset.name),
       md.code(formatBytes(asset.baseSize)),
@@ -47,7 +47,7 @@ export function getBiggerTable(assets: AssetDiff[]) {
 
 export function getSmallerTable(assets: AssetDiff[]) {
   return markdownTable([
-    ['Asset', 'Base size', 'Head size', 'Delta', 'Delta %'],
+    ['Asset', 'Base size', 'Head size', 'Delta ▾', 'Delta %'],
     ...assets.map((asset) => [
       md.code(asset.name),
       md.code(formatBytes(asset.baseSize)),
