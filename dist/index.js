@@ -4214,6 +4214,7 @@ async function run() {
         const octokit = github.getOctokit(inputs.githubToken);
         const body = [
             `### Compare bundles sizes between ${format_1.formatGithubCompareLink(baseSha, headSha)}`,
+            'Sizes are the "output" size of our files, minified, and not gzipped.',
             renderSection({
                 title: `⚠️ ${diff.bigger.length} ${format_1.pluralize(diff.bigger.length, 'bundle', 'bundles')} got bigger`,
                 assets: diff.bigger,
@@ -5247,7 +5248,7 @@ function pluralize(count, singular, plural) {
 }
 exports.pluralize = pluralize;
 function formatGithubCompareLink(baseSha, headSha) {
-    return `[${baseSha.slice(0, 9)}…${headSha.slice(0, 9)}}](https://github.com/launchdarkly/gonfalon/compare/${baseSha}...${headSha})`;
+    return `[${baseSha.slice(0, 9)}…${headSha.slice(0, 9)}](https://github.com/launchdarkly/gonfalon/compare/${baseSha}...${headSha})`;
 }
 exports.formatGithubCompareLink = formatGithubCompareLink;
 

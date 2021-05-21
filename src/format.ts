@@ -84,5 +84,5 @@ export function formatGithubCompareLink(baseSha: string, headSha: string) {
   return `[${baseSha.slice(0, 9)}…${headSha.slice(
     0,
     9,
-  )}}](https://github.com/launchdarkly/gonfalon/compare/${baseSha}...${headSha})`;
+  )}](https://github.com/launchdarkly/gonfalon/compare/${baseSha}...${headSha})`;
 }

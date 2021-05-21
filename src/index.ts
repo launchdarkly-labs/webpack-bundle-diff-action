@@ -112,6 +112,7 @@ async function run() {
         baseSha,
         headSha,
       )}`,
+      'Sizes are the "output" size of our files, minified, and not gzipped.',
       renderSection({
         title: `⚠️ ${diff.bigger.length} ${pluralize(
           diff.bigger.length,
