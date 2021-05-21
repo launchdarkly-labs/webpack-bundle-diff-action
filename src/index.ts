@@ -3,7 +3,7 @@ import * as github from '@actions/github';
 import { access, constants } from 'fs';
 import * as path from 'path';
 
-import { AssetDiff, getDiff } from './diff';
+import { AssetDiff, Diff, getDiff } from './diff';
 import {
   getAddedTable,
   getBiggerTable,
@@ -19,6 +19,21 @@ async function assertFileExists(path: string) {
       error ? reject(new Error(`${path} does not exist`)) : resolve(),
     ),
   );
+}
+
+function renderReductionCelebration({ diff }: { diff: Diff }) {
+  if (
+    diff.added.length === 0 &&
+    diff.bigger.length === 0 &&
+    diff.removed.length > 0 &&
+    diff.smaller.length > 0
+  ) {
+    return `
+Amazing! You reduced the amount of code we ship to our customers, which is great way to help improve performance. Every step counts.
+
+![](https://i.gggl.es/zqN9EdmeD4aY.gif)
+`;
+  }
 }
 
 function renderSection({
@@ -108,11 +123,11 @@ async function run() {
     const octokit = github.getOctokit(inputs.githubToken);
 
     const body = [
-      `### Compare bundles sizes between ${formatGithubCompareLink(
+      `### Comparing bundles sizes between ${formatGithubCompareLink(
         baseSha,
         headSha,
       )}`,
-      'Sizes are the "output" size of our files, minified, and not gzipped.',
+      'Sizes are minified bytes, and not gzipped.',
       renderSection({
         title: `⚠️ ${diff.bigger.length} ${pluralize(
           diff.bigger.length,
@@ -153,10 +168,12 @@ async function run() {
         formatter: getRemovedTable,
       }),
 
+      renderReductionCelebration({ diff }),
+
       '---',
       `[Visit the workflow page](https://github.com/launchdarkly/gonfalon/actions/runs/${runId}) to download the artifacts for this run. You can visualize those with [webpack-bundle-analyzer](https://github.com/webpack-contrib/webpack-bundle-analyzer).`,
     ]
-      .filter((section) => section !== '')
+      .filter((section) => !!section)
       .join('\n');
 
     await octokit.issues.createComment({

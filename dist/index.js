@@ -4145,6 +4145,17 @@ const format_1 = __webpack_require__(767);
 async function assertFileExists(path) {
     return new Promise((resolve, reject) => fs_1.access(path, fs_1.constants.F_OK, (error) => error ? reject(new Error(`${path} does not exist`)) : resolve()));
 }
+function renderReductionCelebration({ diff }) {
+    if (diff.added.length === 0 &&
+        diff.bigger.length === 0 &&
+        diff.removed.length > 0 &&
+        diff.smaller.length > 0) {
+        return `
+Amazing! You reduced the amount of code we ship to our customers, which is great way to help improve performance. Every step counts.
+![](https://i.gggl.es/zqN9EdmeD4aY.gif)
+`;
+    }
+}
 function renderSection({ title, assets, formatter, }) {
     return assets.length > 0
         ? `
@@ -4213,8 +4224,8 @@ async function run() {
         }
         const octokit = github.getOctokit(inputs.githubToken);
         const body = [
-            `### Compare bundles sizes between ${format_1.formatGithubCompareLink(baseSha, headSha)}`,
-            'Sizes are the "output" size of our files, minified, and not gzipped.',
+            `### Comparing bundles sizes between ${format_1.formatGithubCompareLink(baseSha, headSha)}`,
+            'Sizes are minified bytes, and not gzipped.',
             renderSection({
                 title: `⚠️ ${diff.bigger.length} ${format_1.pluralize(diff.bigger.length, 'bundle', 'bundles')} got bigger`,
                 assets: diff.bigger,
@@ -4235,10 +4246,11 @@ async function run() {
                 assets: diff.removed,
                 formatter: format_1.getRemovedTable,
             }),
+            renderReductionCelebration({ diff }),
             '---',
             `[Visit the workflow page](https://github.com/launchdarkly/gonfalon/actions/runs/${runId}) to download the artifacts for this run. You can visualize those with [webpack-bundle-analyzer](https://github.com/webpack-contrib/webpack-bundle-analyzer).`,
         ]
-            .filter((section) => section !== '')
+            .filter((section) => !!section)
             .join('\n');
         await octokit.issues.createComment({
             owner,
@@ -5248,7 +5260,7 @@ function pluralize(count, singular, plural) {
 }
 exports.pluralize = pluralize;
 function formatGithubCompareLink(baseSha, headSha) {
-    return `[${baseSha.slice(0, 9)}…${headSha.slice(0, 9)}](https://github.com/launchdarkly/gonfalon/compare/${baseSha}...${headSha})`;
+    return `[${baseSha.slice(0, 9)}…${headSha.slice(0, 9)}](https://github.com/launchdarkly/gonfalon/compare/${baseSha}...${headSha} "Compare the head branch sha to the base branch sha for this run")`;
 }
 exports.formatGithubCompareLink = formatGithubCompareLink;
 
