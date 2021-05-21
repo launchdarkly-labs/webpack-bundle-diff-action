@@ -4152,6 +4152,7 @@ function renderReductionCelebration({ diff }) {
         diff.smaller.length > 0) {
         return `
 Amazing! You reduced the amount of code we ship to our customers, which is great way to help improve performance. Every step counts.
+
 ![](https://i.gggl.es/zqN9EdmeD4aY.gif)
 `;
     }
