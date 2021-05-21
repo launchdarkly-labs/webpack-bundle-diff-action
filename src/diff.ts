@@ -2,6 +2,7 @@
 // support for contenthash, typescript, etc…
 
 import type { StatsCompilation, StatsAsset } from 'webpack';
+import type { BundleAnalyzerPlugin } from 'webpack-bundle-analyzer';
 
 // We tweak the Webpack stats type to make,
 //   - assetsByChunkName and assets required
@@ -16,6 +17,13 @@ type WebpackStats = Modify<
     assets: WebpackAsset[];
   }
 >;
+
+type FunkyAsset = {
+  name: string;
+  gzipSize: number;
+  statSize: number;
+  parsedSize: number;
+};
 
 export type AssetDiff = {
   name: string;
@@ -54,45 +62,55 @@ const deltaDescending = (a: AssetDiff, b: AssetDiff) =>
   Math.abs(b.delta) - Math.abs(a.delta);
 
 export function getDiff(
-  stats: {
-    base: WebpackStats;
-    head: WebpackStats;
+  analysis: {
+    base: { stats: WebpackStats; report: BundleAnalyzerPlugin.JsonReport };
+    head: { stats: WebpackStats; report: BundleAnalyzerPlugin.JsonReport };
   },
   { diffThreshold = DEFAULT_DIFF_THRESHOLD }: { diffThreshold?: number } = {},
 ): Diff {
-  const byChunkName: {
-    base: Record<string, WebpackAsset>;
-    head: Record<string, WebpackAsset>;
+  const byName: {
+    base: Record<string, FunkyAsset>;
+    head: Record<string, FunkyAsset>;
   } = {
     base: Object.fromEntries(
-      stats.base.assets
-        .map((asset) => {
-          const parsed = parseAssetName(asset.name);
+      analysis.base.report
+        .map((item) => {
+          const parsed = parseAssetName(item.label);
 
-          if (!parsed) {
+          if (!item.isAsset || !parsed) {
             return [];
           }
 
           return [
             parsed.canonicalName,
-            { name: parsed.canonicalName, size: asset.size },
+            {
+              name: parsed.canonicalName,
+              gzipSize: item.gzipSize,
+              statSize: item.statSize,
+              parsedSize: item.parsedSize,
+            },
           ];
         })
         // filter out assets that didn't match for some reason
         .filter((entry) => entry.length !== 0),
     ),
     head: Object.fromEntries(
-      stats.head.assets
-        .map((asset) => {
-          const parsed = parseAssetName(asset.name);
+      analysis.head.report
+        .map((item) => {
+          const parsed = parseAssetName(item.label);
 
-          if (!parsed) {
+          if (!item.isAsset || !parsed) {
             return [];
           }
 
           return [
             parsed.canonicalName,
-            { name: parsed.canonicalName, size: asset.size },
+            {
+              name: parsed.canonicalName,
+              gzipSize: item.gzipSize,
+              statSize: item.statSize,
+              parsedSize: item.parsedSize,
+            },
           ];
         })
         // filter out assets that didn't match for some reason
@@ -108,24 +126,24 @@ export function getDiff(
     unchanged: [],
   };
 
-  for (let name of Object.keys(byChunkName.base)) {
-    const baseAsset = byChunkName.base[name];
-    const baseSize = baseAsset.size;
+  for (let name of Object.keys(byName.base)) {
+    const baseAsset = byName.base[name];
+    const baseSize = baseAsset.parsedSize;
 
-    const headAsset = byChunkName.head[name];
+    const headAsset = byName.head[name];
 
     // Removed
     if (!headAsset) {
       const headSize = 0;
       diff.removed.push({
         name,
-        baseSize: baseAsset.size,
+        baseSize: baseAsset.parsedSize,
         headSize,
         delta: baseSize,
         ratio: -1,
       });
     } else {
-      const headSize = headAsset.size;
+      const headSize = headAsset.parsedSize;
       const delta = headSize - baseSize;
       const ratio = (1 - headSize / baseSize) * -1 || 0;
       const d: AssetDiff = {
@@ -146,11 +164,11 @@ export function getDiff(
     }
   }
 
-  for (let name of Object.keys(byChunkName.head)) {
-    const headAsset = byChunkName.head[name];
-    const headSize = headAsset.size;
+  for (let name of Object.keys(byName.head)) {
+    const headAsset = byName.head[name];
+    const headSize = headAsset.parsedSize;
 
-    const baseAsset = byChunkName.base[name];
+    const baseAsset = byName.base[name];
 
     // Added
     if (!baseAsset) {

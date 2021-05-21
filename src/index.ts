@@ -10,6 +10,7 @@ import {
   getRemovedTable,
   getSmallerTable,
   pluralize,
+  formatGithubCompareLink,
 } from './format';
 
 async function assertFileExists(path: string) {
@@ -40,34 +41,55 @@ ${assets.length > 0 ? formatter(assets) : 'No relevant assets.'}
 async function run() {
   try {
     const inputs = {
-      base: core.getInput('base-stats-path'),
-      head: core.getInput('head-stats-path'),
+      base: {
+        stats: core.getInput('base-stats-path'),
+        report: core.getInput('base-bundle-analysis-report-path'),
+      },
+      head: {
+        stats: core.getInput('head-stats-path'),
+        report: core.getInput('head-bundle-analysis-report-path'),
+      },
       githubToken: core.getInput('github-token'),
     };
 
     const runId = github.context.runId;
     const owner = github.context.repo.owner;
     const repo = github.context.repo.repo;
-    const sha = github.context.sha;
+    const headSha = github.context.sha;
+    const baseSha = github.context.payload.pull_request?.base.sha;
     const pullRequestId = github.context.issue.number;
     if (!pullRequestId) {
       throw new Error('Could not find the PR id');
     }
 
     const paths = {
-      base: path.resolve(process.cwd(), inputs.base),
-      head: path.resolve(process.cwd(), inputs.head),
+      base: {
+        stats: path.resolve(process.cwd(), inputs.base.stats),
+        report: path.resolve(process.cwd(), inputs.base.report),
+      },
+      head: {
+        stats: path.resolve(process.cwd(), inputs.head.stats),
+        report: path.resolve(process.cwd(), inputs.head.report),
+      },
     };
 
-    assertFileExists(paths.base);
-    assertFileExists(paths.head);
+    assertFileExists(paths.base.stats);
+    assertFileExists(paths.base.report);
+    assertFileExists(paths.head.stats);
+    assertFileExists(paths.head.report);
 
-    const stats = {
-      base: require(paths.base),
-      head: require(paths.head),
+    const analysis = {
+      base: {
+        stats: require(paths.base.stats),
+        report: require(paths.base.report),
+      },
+      head: {
+        stats: require(paths.head.stats),
+        report: require(paths.head.report),
+      },
     };
 
-    const diff = getDiff(stats);
+    const diff = getDiff(analysis);
 
     const numberOfChanges = Object.entries(diff)
       .filter(([kind]) => kind !== 'unchanged')
@@ -78,7 +100,7 @@ async function run() {
     // Avoid adding noise to backend-only PRs
     if (numberOfChanges === 0) {
       core.info(
-        `No bundle changes to report for commit ${sha} to ${repo}#${pullRequestId}`,
+        `No bundle changes to report for ${repo}#${pullRequestId} at ${baseSha}…${headSha}`,
       );
       return;
     }
@@ -86,7 +108,10 @@ async function run() {
     const octokit = github.getOctokit(inputs.githubToken);
 
     const body = [
-      `### Webpack bundle diff at ${sha}`,
+      `### Compare bundles sizes between ${formatGithubCompareLink(
+        baseSha,
+        headSha,
+      )}`,
       renderSection({
         title: `⚠️ ${diff.bigger.length} ${pluralize(
           diff.bigger.length,
@@ -140,7 +165,9 @@ async function run() {
       body,
     });
 
-    core.info(`Webpack bundle diff for PR ${repo}#${pullRequestId}`);
+    core.info(
+      `Webpack bundle diff for PR ${repo}#${pullRequestId} at ${baseSha}…${headSha}`,
+    );
     core.info(body);
   } catch (error) {
     core.setFailed(error);

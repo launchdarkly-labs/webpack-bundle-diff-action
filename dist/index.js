@@ -3822,30 +3822,40 @@ const parseAssetName = (name) => {
     };
 };
 const deltaDescending = (a, b) => Math.abs(b.delta) - Math.abs(a.delta);
-function getDiff(stats, { diffThreshold = DEFAULT_DIFF_THRESHOLD } = {}) {
-    const byChunkName = {
-        base: Object.fromEntries(stats.base.assets
-            .map((asset) => {
-            const parsed = parseAssetName(asset.name);
-            if (!parsed) {
+function getDiff(analysis, { diffThreshold = DEFAULT_DIFF_THRESHOLD } = {}) {
+    const byName = {
+        base: Object.fromEntries(analysis.base.report
+            .map((item) => {
+            const parsed = parseAssetName(item.label);
+            if (!item.isAsset || !parsed) {
                 return [];
             }
             return [
                 parsed.canonicalName,
-                { name: parsed.canonicalName, size: asset.size },
+                {
+                    name: parsed.canonicalName,
+                    gzipSize: item.gzipSize,
+                    statSize: item.statSize,
+                    parsedSize: item.parsedSize,
+                },
             ];
         })
             // filter out assets that didn't match for some reason
             .filter((entry) => entry.length !== 0)),
-        head: Object.fromEntries(stats.head.assets
-            .map((asset) => {
-            const parsed = parseAssetName(asset.name);
-            if (!parsed) {
+        head: Object.fromEntries(analysis.head.report
+            .map((item) => {
+            const parsed = parseAssetName(item.label);
+            if (!item.isAsset || !parsed) {
                 return [];
             }
             return [
                 parsed.canonicalName,
-                { name: parsed.canonicalName, size: asset.size },
+                {
+                    name: parsed.canonicalName,
+                    gzipSize: item.gzipSize,
+                    statSize: item.statSize,
+                    parsedSize: item.parsedSize,
+                },
             ];
         })
             // filter out assets that didn't match for some reason
@@ -3858,23 +3868,23 @@ function getDiff(stats, { diffThreshold = DEFAULT_DIFF_THRESHOLD } = {}) {
         smaller: [],
         unchanged: [],
     };
-    for (let name of Object.keys(byChunkName.base)) {
-        const baseAsset = byChunkName.base[name];
-        const baseSize = baseAsset.size;
-        const headAsset = byChunkName.head[name];
+    for (let name of Object.keys(byName.base)) {
+        const baseAsset = byName.base[name];
+        const baseSize = baseAsset.parsedSize;
+        const headAsset = byName.head[name];
         // Removed
         if (!headAsset) {
             const headSize = 0;
             diff.removed.push({
                 name,
-                baseSize: baseAsset.size,
+                baseSize: baseAsset.parsedSize,
                 headSize,
                 delta: baseSize,
                 ratio: -1,
             });
         }
         else {
-            const headSize = headAsset.size;
+            const headSize = headAsset.parsedSize;
             const delta = headSize - baseSize;
             const ratio = (1 - headSize / baseSize) * -1 || 0;
             const d = {
@@ -3895,10 +3905,10 @@ function getDiff(stats, { diffThreshold = DEFAULT_DIFF_THRESHOLD } = {}) {
             }
         }
     }
-    for (let name of Object.keys(byChunkName.head)) {
-        const headAsset = byChunkName.head[name];
-        const headSize = headAsset.size;
-        const baseAsset = byChunkName.base[name];
+    for (let name of Object.keys(byName.head)) {
+        const headAsset = byName.head[name];
+        const headSize = headAsset.parsedSize;
+        const baseAsset = byName.base[name];
         // Added
         if (!baseAsset) {
             diff.added.push({
@@ -4144,31 +4154,53 @@ ${assets.length > 0 ? formatter(assets) : 'No relevant assets.'}
         : '';
 }
 async function run() {
+    var _a;
     try {
         const inputs = {
-            base: core.getInput('base-stats-path'),
-            head: core.getInput('head-stats-path'),
+            base: {
+                stats: core.getInput('base-stats-path'),
+                report: core.getInput('base-bundle-analysis-report-path'),
+            },
+            head: {
+                stats: core.getInput('head-stats-path'),
+                report: core.getInput('head-bundle-analysis-report-path'),
+            },
             githubToken: core.getInput('github-token'),
         };
         const runId = github.context.runId;
         const owner = github.context.repo.owner;
         const repo = github.context.repo.repo;
-        const sha = github.context.sha;
+        const headSha = github.context.sha;
+        const baseSha = (_a = github.context.payload.pull_request) === null || _a === void 0 ? void 0 : _a.base.sha;
         const pullRequestId = github.context.issue.number;
         if (!pullRequestId) {
             throw new Error('Could not find the PR id');
         }
         const paths = {
-            base: path.resolve(process.cwd(), inputs.base),
-            head: path.resolve(process.cwd(), inputs.head),
+            base: {
+                stats: path.resolve(process.cwd(), inputs.base.stats),
+                report: path.resolve(process.cwd(), inputs.base.report),
+            },
+            head: {
+                stats: path.resolve(process.cwd(), inputs.head.stats),
+                report: path.resolve(process.cwd(), inputs.head.report),
+            },
         };
-        assertFileExists(paths.base);
-        assertFileExists(paths.head);
-        const stats = {
-            base: require(paths.base),
-            head: require(paths.head),
+        assertFileExists(paths.base.stats);
+        assertFileExists(paths.base.report);
+        assertFileExists(paths.head.stats);
+        assertFileExists(paths.head.report);
+        const analysis = {
+            base: {
+                stats: require(paths.base.stats),
+                report: require(paths.base.report),
+            },
+            head: {
+                stats: require(paths.head.stats),
+                report: require(paths.head.report),
+            },
         };
-        const diff = diff_1.getDiff(stats);
+        const diff = diff_1.getDiff(analysis);
         const numberOfChanges = Object.entries(diff)
             .filter(([kind]) => kind !== 'unchanged')
             .map(([_, assets]) => assets.length)
@@ -4176,12 +4208,12 @@ async function run() {
         // If there are no changes whatsoever, don't report.
         // Avoid adding noise to backend-only PRs
         if (numberOfChanges === 0) {
-            core.info(`No bundle changes to report for commit ${sha} to ${repo}#${pullRequestId}`);
+            core.info(`No bundle changes to report for ${repo}#${pullRequestId} at ${baseSha}…${headSha}`);
             return;
         }
         const octokit = github.getOctokit(inputs.githubToken);
         const body = [
-            `### Webpack bundle diff at ${sha}`,
+            `### Compare bundles sizes between ${format_1.formatGithubCompareLink(baseSha, headSha)}`,
             renderSection({
                 title: `⚠️ ${diff.bigger.length} ${format_1.pluralize(diff.bigger.length, 'bundle', 'bundles')} got bigger`,
                 assets: diff.bigger,
@@ -4213,7 +4245,7 @@ async function run() {
             issue_number: pullRequestId,
             body,
         });
-        core.info(`Webpack bundle diff for PR ${repo}#${pullRequestId}`);
+        core.info(`Webpack bundle diff for PR ${repo}#${pullRequestId} at ${baseSha}…${headSha}`);
         core.info(body);
     }
     catch (error) {
@@ -5140,7 +5172,7 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.pluralize = exports.getUnchangedTable = exports.getSmallerTable = exports.getBiggerTable = exports.getRemovedTable = exports.getAddedTable = void 0;
+exports.formatGithubCompareLink = exports.pluralize = exports.getUnchangedTable = exports.getSmallerTable = exports.getBiggerTable = exports.getRemovedTable = exports.getAddedTable = void 0;
 const markdown_table_1 = __importDefault(__webpack_require__(366));
 const pretty_bytes_1 = __importDefault(__webpack_require__(589));
 const md = {
@@ -5214,6 +5246,10 @@ function pluralize(count, singular, plural) {
     }
 }
 exports.pluralize = pluralize;
+function formatGithubCompareLink(baseSha, headSha) {
+    return `[${baseSha.slice(0, 9)}…${headSha.slice(0, 9)}}](https://github.com/launchdarkly/gonfalon/compare/${baseSha}...${headSha})`;
+}
+exports.formatGithubCompareLink = formatGithubCompareLink;
 
 
 /***/ }),

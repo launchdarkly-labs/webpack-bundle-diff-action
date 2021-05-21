@@ -79,3 +79,10 @@ export function pluralize(count: number, singular: string, plural: string) {
       return undefined;
   }
 }
+
+export function formatGithubCompareLink(baseSha: string, headSha: string) {
+  return `[${baseSha.slice(0, 9)}…${headSha.slice(
+    0,
+    9,
+  )}}](https://github.com/launchdarkly/gonfalon/compare/${baseSha}...${headSha})`;
+}
