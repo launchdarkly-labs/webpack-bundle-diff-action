@@ -6,19 +6,6 @@ This action computes a diff of bundle sizes between a head branch and a base bra
 
 This section contains ideas for how to make this better.
 
-**Display total before / after size**
-
-> …would help me know the net change for the commit.
-
-```
-Bigger:    +960.2 kB
-Smaller: -2,911.47kB
-Added:   +1,366   kB
-Removed:     -0   kB
---------------------
-Total:   -585.27  kB
-```
-
 **Make threshold more configurable**
 
 ## Usage

@@ -58,9 +58,6 @@ const parseAssetName = (name: string) => {
   };
 };
 
-const deltaDescending = (a: AssetDiff, b: AssetDiff) =>
-  Math.abs(b.delta) - Math.abs(a.delta);
-
 export function getDiff(
   analysis: {
     base: { stats: WebpackStats; report: BundleAnalyzerPlugin.JsonReport };
@@ -118,7 +115,10 @@ export function getDiff(
     ),
   };
 
-  let diff: Record<string, AssetDiff[]> = {
+  let diff: Record<
+    'added' | 'removed' | 'bigger' | 'smaller' | 'unchanged',
+    AssetDiff[]
+  > = {
     added: [],
     removed: [],
     bigger: [],
@@ -182,11 +182,5 @@ export function getDiff(
     }
   }
 
-  return {
-    added: diff.added.sort(deltaDescending),
-    removed: diff.removed.sort(deltaDescending),
-    bigger: diff.bigger.sort(deltaDescending),
-    smaller: diff.smaller.sort(deltaDescending),
-    unchanged: diff.unchanged.sort(deltaDescending),
-  };
+  return diff;
 }

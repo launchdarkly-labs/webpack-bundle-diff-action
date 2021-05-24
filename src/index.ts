@@ -3,15 +3,17 @@ import * as github from '@actions/github';
 import { access, constants } from 'fs';
 import * as path from 'path';
 
-import { AssetDiff, Diff, getDiff } from './diff';
+import { getDiff } from './diff';
 import {
-  getAddedTable,
-  getBiggerTable,
-  getRemovedTable,
-  getSmallerTable,
+  renderSection,
+  renderAddedTable,
+  renderBiggerTable,
+  renderRemovedTable,
+  renderSmallerTable,
+  renderReductionCelebration,
   pluralize,
-  formatGithubCompareLink,
-} from './format';
+  renderGithubCompareLink,
+} from './render';
 
 async function assertFileExists(path: string) {
   return new Promise<void>((resolve, reject) =>
@@ -19,38 +21,6 @@ async function assertFileExists(path: string) {
       error ? reject(new Error(`${path} does not exist`)) : resolve(),
     ),
   );
-}
-
-function renderReductionCelebration({ diff }: { diff: Diff }) {
-  if (
-    diff.added.length === 0 &&
-    diff.bigger.length === 0 &&
-    diff.removed.length > 0 &&
-    diff.smaller.length > 0
-  ) {
-    return `
-Amazing! You reduced the amount of code we ship to our customers, which is great way to help improve performance. Every step counts.
-
-![](https://i.gggl.es/zqN9EdmeD4aY.gif)
-`;
-  }
-}
-
-function renderSection({
-  title,
-  assets,
-  formatter,
-}: {
-  title: string;
-  assets: AssetDiff[];
-  formatter(assets: AssetDiff[]): string;
-}) {
-  return assets.length > 0
-    ? `
-#### ${title}
-${assets.length > 0 ? formatter(assets) : 'No relevant assets.'}
-`
-    : '';
 }
 
 async function run() {
@@ -123,7 +93,7 @@ async function run() {
     const octokit = github.getOctokit(inputs.githubToken);
 
     const body = [
-      `### Comparing bundles sizes between ${formatGithubCompareLink(
+      `### Comparing bundles sizes between ${renderGithubCompareLink(
         baseSha,
         headSha,
       )}`,
@@ -135,7 +105,7 @@ async function run() {
           'bundles',
         )} got bigger`,
         assets: diff.bigger,
-        formatter: getBiggerTable,
+        formatter: renderBiggerTable,
       }),
 
       renderSection({
@@ -145,7 +115,7 @@ async function run() {
           'bundles',
         )} got smaller`,
         assets: diff.smaller,
-        formatter: getSmallerTable,
+        formatter: renderSmallerTable,
       }),
 
       renderSection({
@@ -155,7 +125,7 @@ async function run() {
           'bundles were',
         )} added`,
         assets: diff.added,
-        formatter: getAddedTable,
+        formatter: renderAddedTable,
       }),
 
       renderSection({
@@ -165,12 +135,13 @@ async function run() {
           'bundles were',
         )} removed`,
         assets: diff.removed,
-        formatter: getRemovedTable,
+        formatter: renderRemovedTable,
       }),
 
       renderReductionCelebration({ diff }),
 
       '---',
+
       `[Visit the workflow page](https://github.com/launchdarkly/gonfalon/actions/runs/${runId}) to download the artifacts for this run. You can visualize those with [webpack-bundle-analyzer](https://github.com/webpack-contrib/webpack-bundle-analyzer) or online with [statoscope](https://statoscope.tech/).`,
     ]
       .filter((section) => !!section)

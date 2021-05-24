@@ -3821,7 +3821,6 @@ const parseAssetName = (name) => {
         canonicalName: `${match.groups.assetname}.${match.groups.extension}`,
     };
 };
-const deltaDescending = (a, b) => Math.abs(b.delta) - Math.abs(a.delta);
 function getDiff(analysis, { diffThreshold = DEFAULT_DIFF_THRESHOLD } = {}) {
     const byName = {
         base: Object.fromEntries(analysis.base.report
@@ -3920,13 +3919,7 @@ function getDiff(analysis, { diffThreshold = DEFAULT_DIFF_THRESHOLD } = {}) {
             });
         }
     }
-    return {
-        added: diff.added.sort(deltaDescending),
-        removed: diff.removed.sort(deltaDescending),
-        bigger: diff.bigger.sort(deltaDescending),
-        smaller: diff.smaller.sort(deltaDescending),
-        unchanged: diff.unchanged.sort(deltaDescending),
-    };
+    return diff;
 }
 exports.getDiff = getDiff;
 
@@ -4141,29 +4134,9 @@ const github = __importStar(__webpack_require__(469));
 const fs_1 = __webpack_require__(747);
 const path = __importStar(__webpack_require__(622));
 const diff_1 = __webpack_require__(489);
-const format_1 = __webpack_require__(767);
+const render_1 = __webpack_require__(897);
 async function assertFileExists(path) {
     return new Promise((resolve, reject) => fs_1.access(path, fs_1.constants.F_OK, (error) => error ? reject(new Error(`${path} does not exist`)) : resolve()));
-}
-function renderReductionCelebration({ diff }) {
-    if (diff.added.length === 0 &&
-        diff.bigger.length === 0 &&
-        diff.removed.length > 0 &&
-        diff.smaller.length > 0) {
-        return `
-Amazing! You reduced the amount of code we ship to our customers, which is great way to help improve performance. Every step counts.
-
-![](https://i.gggl.es/zqN9EdmeD4aY.gif)
-`;
-    }
-}
-function renderSection({ title, assets, formatter, }) {
-    return assets.length > 0
-        ? `
-#### ${title}
-${assets.length > 0 ? formatter(assets) : 'No relevant assets.'}
-`
-        : '';
 }
 async function run() {
     var _a;
@@ -4225,29 +4198,29 @@ async function run() {
         }
         const octokit = github.getOctokit(inputs.githubToken);
         const body = [
-            `### Comparing bundles sizes between ${format_1.formatGithubCompareLink(baseSha, headSha)}`,
+            `### Comparing bundles sizes between ${render_1.renderGithubCompareLink(baseSha, headSha)}`,
             'Sizes are minified bytes, and not gzipped.',
-            renderSection({
-                title: `⚠️ ${diff.bigger.length} ${format_1.pluralize(diff.bigger.length, 'bundle', 'bundles')} got bigger`,
+            render_1.renderSection({
+                title: `⚠️ ${diff.bigger.length} ${render_1.pluralize(diff.bigger.length, 'bundle', 'bundles')} got bigger`,
                 assets: diff.bigger,
-                formatter: format_1.getBiggerTable,
+                formatter: render_1.renderBiggerTable,
             }),
-            renderSection({
-                title: `🎉 ${diff.smaller.length} ${format_1.pluralize(diff.smaller.length, 'bundle', 'bundles')} got smaller`,
+            render_1.renderSection({
+                title: `🎉 ${diff.smaller.length} ${render_1.pluralize(diff.smaller.length, 'bundle', 'bundles')} got smaller`,
                 assets: diff.smaller,
-                formatter: format_1.getSmallerTable,
+                formatter: render_1.renderSmallerTable,
             }),
-            renderSection({
-                title: `🤔 ${diff.added.length} ${format_1.pluralize(diff.added.length, 'bundle was', 'bundles were')} added`,
+            render_1.renderSection({
+                title: `🤔 ${diff.added.length} ${render_1.pluralize(diff.added.length, 'bundle was', 'bundles were')} added`,
                 assets: diff.added,
-                formatter: format_1.getAddedTable,
+                formatter: render_1.renderAddedTable,
             }),
-            renderSection({
-                title: `👏 ${diff.removed.length} ${format_1.pluralize(diff.removed.length, 'bundle was', 'bundles were')} removed`,
+            render_1.renderSection({
+                title: `👏 ${diff.removed.length} ${render_1.pluralize(diff.removed.length, 'bundle was', 'bundles were')} removed`,
                 assets: diff.removed,
-                formatter: format_1.getRemovedTable,
+                formatter: render_1.renderRemovedTable,
             }),
-            renderReductionCelebration({ diff }),
+            render_1.renderReductionCelebration({ diff }),
             '---',
             `[Visit the workflow page](https://github.com/launchdarkly/gonfalon/actions/runs/${runId}) to download the artifacts for this run. You can visualize those with [webpack-bundle-analyzer](https://github.com/webpack-contrib/webpack-bundle-analyzer) or online with [statoscope](https://statoscope.tech/).`,
         ]
@@ -4816,132 +4789,6 @@ exports.HttpClient = HttpClient;
 
 /***/ }),
 
-/***/ 589:
-/***/ (function(module) {
-
-"use strict";
-
-
-const BYTE_UNITS = [
-	'B',
-	'kB',
-	'MB',
-	'GB',
-	'TB',
-	'PB',
-	'EB',
-	'ZB',
-	'YB'
-];
-
-const BIBYTE_UNITS = [
-	'B',
-	'kiB',
-	'MiB',
-	'GiB',
-	'TiB',
-	'PiB',
-	'EiB',
-	'ZiB',
-	'YiB'
-];
-
-const BIT_UNITS = [
-	'b',
-	'kbit',
-	'Mbit',
-	'Gbit',
-	'Tbit',
-	'Pbit',
-	'Ebit',
-	'Zbit',
-	'Ybit'
-];
-
-const BIBIT_UNITS = [
-	'b',
-	'kibit',
-	'Mibit',
-	'Gibit',
-	'Tibit',
-	'Pibit',
-	'Eibit',
-	'Zibit',
-	'Yibit'
-];
-
-/*
-Formats the given number using `Number#toLocaleString`.
-- If locale is a string, the value is expected to be a locale-key (for example: `de`).
-- If locale is true, the system default locale is used for translation.
-- If no value for locale is specified, the number is returned unmodified.
-*/
-const toLocaleString = (number, locale, options) => {
-	let result = number;
-	if (typeof locale === 'string' || Array.isArray(locale)) {
-		result = number.toLocaleString(locale, options);
-	} else if (locale === true || options !== undefined) {
-		result = number.toLocaleString(undefined, options);
-	}
-
-	return result;
-};
-
-module.exports = (number, options) => {
-	if (!Number.isFinite(number)) {
-		throw new TypeError(`Expected a finite number, got ${typeof number}: ${number}`);
-	}
-
-	options = Object.assign({bits: false, binary: false}, options);
-
-	const UNITS = options.bits ?
-		(options.binary ? BIBIT_UNITS : BIT_UNITS) :
-		(options.binary ? BIBYTE_UNITS : BYTE_UNITS);
-
-	if (options.signed && number === 0) {
-		return ` 0 ${UNITS[0]}`;
-	}
-
-	const isNegative = number < 0;
-	const prefix = isNegative ? '-' : (options.signed ? '+' : '');
-
-	if (isNegative) {
-		number = -number;
-	}
-
-	let localeOptions;
-
-	if (options.minimumFractionDigits !== undefined) {
-		localeOptions = {minimumFractionDigits: options.minimumFractionDigits};
-	}
-
-	if (options.maximumFractionDigits !== undefined) {
-		localeOptions = Object.assign({maximumFractionDigits: options.maximumFractionDigits}, localeOptions);
-	}
-
-	if (number < 1) {
-		const numberString = toLocaleString(number, options.locale, localeOptions);
-		return prefix + numberString + ' ' + UNITS[0];
-	}
-
-	const exponent = Math.min(Math.floor(options.binary ? Math.log(number) / Math.log(1024) : Math.log10(number) / 3), UNITS.length - 1);
-	// eslint-disable-next-line unicorn/prefer-exponentiation-operator
-	number /= Math.pow(options.binary ? 1024 : 1000, exponent);
-
-	if (!localeOptions) {
-		number = number.toPrecision(3);
-	}
-
-	const numberString = toLocaleString(Number(number), options.locale, localeOptions);
-
-	const unit = UNITS[exponent];
-
-	return prefix + numberString + ' ' + unit;
-};
-
-
-/***/ }),
-
 /***/ 605:
 /***/ (function(module) {
 
@@ -5174,97 +5021,6 @@ exports.request = request;
 /***/ (function(module) {
 
 module.exports = require("zlib");
-
-/***/ }),
-
-/***/ 767:
-/***/ (function(__unusedmodule, exports, __webpack_require__) {
-
-"use strict";
-
-var __importDefault = (this && this.__importDefault) || function (mod) {
-    return (mod && mod.__esModule) ? mod : { "default": mod };
-};
-Object.defineProperty(exports, "__esModule", { value: true });
-exports.formatGithubCompareLink = exports.pluralize = exports.getUnchangedTable = exports.getSmallerTable = exports.getBiggerTable = exports.getRemovedTable = exports.getAddedTable = void 0;
-const markdown_table_1 = __importDefault(__webpack_require__(366));
-const pretty_bytes_1 = __importDefault(__webpack_require__(589));
-const md = {
-    code: (s) => `\`${s}\``,
-};
-const formatBytes = (bytes) => pretty_bytes_1.default(bytes);
-const formatRatio = (ratio) => ratio.toLocaleString('en', { style: 'percent', maximumFractionDigits: 2 });
-function getAddedTable(assets) {
-    return markdown_table_1.default([
-        ['Asset', 'Size'],
-        ...assets.map((asset) => [
-            md.code(asset.name),
-            md.code(formatBytes(asset.headSize)),
-        ]),
-    ]);
-}
-exports.getAddedTable = getAddedTable;
-function getRemovedTable(assets) {
-    return markdown_table_1.default([
-        ['Asset', 'Size'],
-        ...assets.map((asset) => [
-            md.code(asset.name),
-            md.code(formatBytes(asset.baseSize)),
-        ]),
-    ]);
-}
-exports.getRemovedTable = getRemovedTable;
-function getBiggerTable(assets) {
-    return markdown_table_1.default([
-        ['Asset', 'Base size', 'Head size', 'Delta ▾', 'Delta %'],
-        ...assets.map((asset) => [
-            md.code(asset.name),
-            md.code(formatBytes(asset.baseSize)),
-            md.code(formatBytes(asset.headSize)),
-            md.code(formatBytes(asset.delta)),
-            md.code(formatRatio(asset.ratio)),
-        ]),
-    ]);
-}
-exports.getBiggerTable = getBiggerTable;
-function getSmallerTable(assets) {
-    return markdown_table_1.default([
-        ['Asset', 'Base size', 'Head size', 'Delta ▾', 'Delta %'],
-        ...assets.map((asset) => [
-            md.code(asset.name),
-            md.code(formatBytes(asset.baseSize)),
-            md.code(formatBytes(asset.headSize)),
-            md.code(formatBytes(asset.delta)),
-            md.code(formatRatio(asset.ratio)),
-        ]),
-    ]);
-}
-exports.getSmallerTable = getSmallerTable;
-function getUnchangedTable(assets) {
-    return markdown_table_1.default([
-        ['Asset', 'Size'],
-        ...assets.map((asset) => [asset.name, formatBytes(asset.headSize)]),
-    ]);
-}
-exports.getUnchangedTable = getUnchangedTable;
-const pluralRules = new Intl.PluralRules('en');
-function pluralize(count, singular, plural) {
-    const rule = pluralRules.select(count);
-    switch (rule) {
-        case 'one':
-            return singular;
-        case 'other':
-            return plural;
-        default:
-            return undefined;
-    }
-}
-exports.pluralize = pluralize;
-function formatGithubCompareLink(baseSha, headSha) {
-    return `[${baseSha.slice(0, 9)}…${headSha.slice(0, 9)}](https://github.com/launchdarkly/gonfalon/compare/${baseSha}...${headSha} "Compare the head branch sha to the base branch sha for this run")`;
-}
-exports.formatGithubCompareLink = formatGithubCompareLink;
-
 
 /***/ }),
 
@@ -6624,6 +6380,157 @@ function removeHook(state, name, method) {
 
   state.registry[name].splice(index, 1);
 }
+
+
+/***/ }),
+
+/***/ 897:
+/***/ (function(__unusedmodule, exports, __webpack_require__) {
+
+"use strict";
+
+var __importDefault = (this && this.__importDefault) || function (mod) {
+    return (mod && mod.__esModule) ? mod : { "default": mod };
+};
+Object.defineProperty(exports, "__esModule", { value: true });
+exports.renderReductionCelebration = exports.renderGithubCompareLink = exports.pluralize = exports.renderUnchangedTable = exports.renderSmallerTable = exports.renderBiggerTable = exports.renderRemovedTable = exports.renderAddedTable = exports.renderSummaryTable = exports.renderSection = void 0;
+const markdown_table_1 = __importDefault(__webpack_require__(366));
+const sortedColumn = (name) => `${name} ▾`;
+const deltaDescending = (a, b) => Math.abs(b.delta) - Math.abs(a.delta);
+const sizeDescending = (version) => (a, b) => b[version] - a[version];
+const md = {
+    code: (s) => `\`${s}\``,
+};
+const formatBytes = (bytes, { signed } = {}) => (bytes / 1000).toLocaleString('en', {
+    // @ts-ignore: typescript type defs don't know about signDisplay yet
+    signDisplay: signed ? 'always' : 'auto',
+    maximumFractionDigits: 0,
+    style: 'unit',
+    unit: 'kilobyte',
+    unitDisplay: 'short',
+});
+const formatRatio = (ratio) => ratio.toLocaleString('en', { style: 'percent', maximumFractionDigits: 0 });
+function renderSection({ title, assets, formatter, }) {
+    return assets.length > 0
+        ? `
+  #### ${title}
+  ${assets.length > 0 ? formatter({ assets }) : 'No relevant assets.'}
+  `
+        : '';
+}
+exports.renderSection = renderSection;
+function renderSummaryTable({ diff }) {
+    const bigger = Object.values(diff.bigger).reduce((total, asset) => total + asset.delta, 0);
+    const smaller = Object.values(diff.smaller).reduce((total, asset) => total + asset.delta, 0);
+    const added = Object.values(diff.added).reduce((total, asset) => total + asset.delta, 0);
+    const removed = Object.values(diff.removed).reduce((total, asset) => total + asset.delta, 0);
+    const total = bigger + smaller + added + removed;
+    return markdown_table_1.default([
+        ['', 'Delta'],
+        ['Bigger', md.code(formatBytes(bigger, { signed: true }))],
+        ['Smaller', md.code(formatBytes(smaller, { signed: true }))],
+        ['Added', md.code(formatBytes(added, { signed: true }))],
+        ['Removed', md.code(formatBytes(removed, { signed: true }))],
+        ['**Total**', md.code(formatBytes(total, { signed: true }))],
+    ], { align: ['l', 'r'] });
+}
+exports.renderSummaryTable = renderSummaryTable;
+function renderAddedTable({ assets }) {
+    const order = sizeDescending('headSize');
+    return markdown_table_1.default([
+        ['Asset', sortedColumn('Size')],
+        ...assets
+            .sort(order)
+            .map((asset) => [
+            md.code(asset.name),
+            md.code(formatBytes(asset.headSize)),
+        ]),
+    ], { align: ['l', 'r'] });
+}
+exports.renderAddedTable = renderAddedTable;
+function renderRemovedTable({ assets }) {
+    const order = sizeDescending('baseSize');
+    return markdown_table_1.default([
+        ['Asset', sortedColumn('Size')],
+        ...assets
+            .sort(order)
+            .map((asset) => [
+            md.code(asset.name),
+            md.code(formatBytes(asset.baseSize)),
+        ]),
+    ], { align: ['l', 'r'] });
+}
+exports.renderRemovedTable = renderRemovedTable;
+function renderBiggerTable({ assets }) {
+    return markdown_table_1.default([
+        ['Asset', 'Base size', 'Head size', sortedColumn('Delta'), 'Delta %'],
+        ...assets
+            .sort(deltaDescending)
+            .map((asset) => [
+            md.code(asset.name),
+            md.code(formatBytes(asset.baseSize)),
+            md.code(formatBytes(asset.headSize)),
+            md.code(formatBytes(asset.delta)),
+            md.code(formatRatio(asset.ratio)),
+        ]),
+    ], { align: ['l', 'r', 'r', 'r', 'r'] });
+}
+exports.renderBiggerTable = renderBiggerTable;
+function renderSmallerTable({ assets }) {
+    return markdown_table_1.default([
+        ['Asset', 'Base size', 'Head size', sortedColumn('Delta'), 'Delta %'],
+        ...assets
+            .sort(deltaDescending)
+            .map((asset) => [
+            md.code(asset.name),
+            md.code(formatBytes(asset.baseSize)),
+            md.code(formatBytes(asset.headSize)),
+            md.code(formatBytes(asset.delta)),
+            md.code(formatRatio(asset.ratio)),
+        ]),
+    ], { align: ['l', 'r', 'r', 'r', 'r'] });
+}
+exports.renderSmallerTable = renderSmallerTable;
+function renderUnchangedTable({ assets }) {
+    const order = sizeDescending('baseSize');
+    return markdown_table_1.default([
+        ['Asset', sortedColumn('Size')],
+        ...assets
+            .sort(order)
+            .map((asset) => [asset.name, formatBytes(asset.headSize)]),
+    ], { align: ['l', 'r'] });
+}
+exports.renderUnchangedTable = renderUnchangedTable;
+const pluralRules = new Intl.PluralRules('en');
+function pluralize(count, singular, plural) {
+    const rule = pluralRules.select(count);
+    switch (rule) {
+        case 'one':
+            return singular;
+        case 'other':
+            return plural;
+        default:
+            return undefined;
+    }
+}
+exports.pluralize = pluralize;
+function renderGithubCompareLink(baseSha, headSha) {
+    return `[${baseSha.slice(0, 9)}…${headSha.slice(0, 9)}](https://github.com/launchdarkly/gonfalon/compare/${baseSha}...${headSha} "Compare the head branch sha to the base branch sha for this run")`;
+}
+exports.renderGithubCompareLink = renderGithubCompareLink;
+function renderReductionCelebration({ diff }) {
+    if (diff.added.length === 0 &&
+        diff.bigger.length === 0 &&
+        diff.removed.length > 0 &&
+        diff.smaller.length > 0) {
+        return `
+Amazing! You reduced the amount of code we ship to our customers, which is great way to help improve performance. Every step counts.
+
+![](https://i.gggl.es/zqN9EdmeD4aY.gif)
+`;
+    }
+}
+exports.renderReductionCelebration = renderReductionCelebration;
 
 
 /***/ }),
