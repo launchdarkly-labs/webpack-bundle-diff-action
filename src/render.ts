@@ -13,6 +13,7 @@ const sizeDescending = (version: 'headSize' | 'baseSize') => (
 ) => b[version] - a[version];
 
 const md = {
+  emphasis: (s: string) => `**${s}**`,
   code: (s: string) => `\`${s}\``,
 };
 
@@ -74,7 +75,10 @@ export function renderSummaryTable({ diff }: { diff: Diff }) {
       ['Smaller', md.code(formatBytes(smaller, { signed: true }))],
       ['Added', md.code(formatBytes(added, { signed: true }))],
       ['Removed', md.code(formatBytes(removed, { signed: true }))],
-      ['**Total**', md.code(formatBytes(total, { signed: true }))],
+      [
+        md.emphasis('Total'),
+        md.emphasis(md.code(formatBytes(total, { signed: true }))),
+      ],
     ],
     { align: ['l', 'r'] },
   );

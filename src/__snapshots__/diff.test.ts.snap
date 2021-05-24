@@ -67,13 +67,13 @@ exports[`smaller diff 1`] = `
 `;
 
 exports[`summary 1`] = `
-"|           |       Delta |
-| :-------- | ----------: |
-| Bigger    |   \`+960 kB\` |
-| Smaller   | \`-2,911 kB\` |
-| Added     | \`+1,366 kB\` |
-| Removed   |     \`+0 kB\` |
-| **Total** |   \`-586 kB\` |"
+"|           |         Delta |
+| :-------- | ------------: |
+| Bigger    |     \`+960 kB\` |
+| Smaller   |   \`-2,911 kB\` |
+| Added     |   \`+1,366 kB\` |
+| Removed   |       \`+0 kB\` |
+| **Total** | **\`-586 kB\`** |"
 `;
 
 exports[`unchanged diff 1`] = `

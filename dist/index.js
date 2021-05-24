@@ -6403,6 +6403,7 @@ const sortedColumn = (name) => `${name} ▾`;
 const deltaDescending = (a, b) => Math.abs(b.delta) - Math.abs(a.delta);
 const sizeDescending = (version) => (a, b) => b[version] - a[version];
 const md = {
+    emphasis: (s) => `**${s}**`,
     code: (s) => `\`${s}\``,
 };
 const formatBytes = (bytes, { signed } = {}) => (bytes / 1000).toLocaleString('en', {
@@ -6433,7 +6434,10 @@ function renderSummaryTable({ diff }) {
         ['Smaller', md.code(formatBytes(smaller, { signed: true }))],
         ['Added', md.code(formatBytes(added, { signed: true }))],
         ['Removed', md.code(formatBytes(removed, { signed: true }))],
-        ['**Total**', md.code(formatBytes(total, { signed: true }))],
+        [
+            md.emphasis('Total'),
+            md.emphasis(md.code(formatBytes(total, { signed: true }))),
+        ],
     ], { align: ['l', 'r'] });
 }
 exports.renderSummaryTable = renderSummaryTable;
