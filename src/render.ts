@@ -31,19 +31,17 @@ const formatRatio = (ratio: number) =>
 
 export function renderSection({
   title,
-  assets,
-  formatter,
+  isEmpty = false,
+  children,
 }: {
   title: string;
-  assets: AssetDiff[];
-  formatter({ assets }: { assets: AssetDiff[] }): string;
+  isEmpty?: boolean;
+  children: string;
 }) {
-  return assets.length > 0
-    ? `
-  #### ${title}
-  ${assets.length > 0 ? formatter({ assets }) : 'No relevant assets.'}
-  `
-    : '';
+  return `
+#### ${title}
+${!isEmpty ? children : 'No relevant changes.'}
+`;
 }
 
 export function renderSummaryTable({ diff }: { diff: Diff }) {

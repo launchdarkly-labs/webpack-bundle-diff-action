@@ -30,8 +30,22 @@ test('section', () => {
         'bundle',
         'bundles',
       )} got bigger`,
-      assets: diff.bigger,
-      formatter: renderBiggerTable,
+      isEmpty: diff.bigger.length === 0,
+      children: renderBiggerTable({ assets: diff.bigger }),
+    }),
+  ).toMatchSnapshot();
+});
+
+test('empty section', () => {
+  expect(
+    renderSection({
+      title: `⚠️ ${diff.bigger.length} ${pluralize(
+        diff.bigger.length,
+        'bundle',
+        'bundles',
+      )} got bigger`,
+      isEmpty: true,
+      children: renderBiggerTable({ assets: [] }),
     }),
   ).toMatchSnapshot();
 });

@@ -15,6 +15,13 @@ exports[`bigger diff 1`] = `
 | \`FlagExperimentsContainer.js\`      |  \`203 kB\` |  \`240 kB\` |  \`37 kB\` |    \`18%\` |"
 `;
 
+exports[`empty section 1`] = `
+"
+#### ⚠️ 3 bundles got bigger
+No relevant changes.
+"
+`;
+
 exports[`reduction celebration 1`] = `undefined`;
 
 exports[`removed diff 1`] = `
@@ -24,13 +31,13 @@ exports[`removed diff 1`] = `
 
 exports[`section 1`] = `
 "
-  #### ⚠️ 3 bundles got bigger
-  | Asset                              | Base size | Head size |  Delta ▾ |  Delta % |
+#### ⚠️ 3 bundles got bigger
+| Asset                              | Base size | Head size |  Delta ▾ |  Delta % |
 | :--------------------------------- | --------: | --------: | -------: | -------: |
 | \`ManageFlagVariationsContainer.js\` |   \`35 kB\` |  \`682 kB\` | \`647 kB\` | \`1,861%\` |
 | \`common.js\`                        |  \`268 kB\` |  \`544 kB\` | \`276 kB\` |   \`103%\` |
 | \`FlagExperimentsContainer.js\`      |  \`203 kB\` |  \`240 kB\` |  \`37 kB\` |    \`18%\` |
-  "
+"
 `;
 
 exports[`smaller diff 1`] = `

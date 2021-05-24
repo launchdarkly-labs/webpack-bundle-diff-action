@@ -4193,7 +4193,7 @@ async function run() {
         // If there are no changes whatsoever, don't report.
         // Avoid adding noise to backend-only PRs
         if (numberOfChanges === 0) {
-            core.info(`No bundle changes to report for ${repo}#${pullRequestId} at ${baseSha}…${headSha}`);
+            core.info(`No significant bundle changes to report for ${repo}#${pullRequestId} at ${baseSha}…${headSha}`);
             return;
         }
         const octokit = github.getOctokit(inputs.githubToken);
@@ -4201,24 +4201,28 @@ async function run() {
             `### Comparing bundles sizes between ${render_1.renderGithubCompareLink(baseSha, headSha)}`,
             'Sizes are minified bytes, and not gzipped.',
             render_1.renderSection({
+                title: 'Summary of changes',
+                children: render_1.renderSummaryTable({ diff }),
+            }),
+            render_1.renderSection({
                 title: `⚠️ ${diff.bigger.length} ${render_1.pluralize(diff.bigger.length, 'bundle', 'bundles')} got bigger`,
-                assets: diff.bigger,
-                formatter: render_1.renderBiggerTable,
+                isEmpty: diff.bigger.length === 0,
+                children: render_1.renderBiggerTable({ assets: diff.bigger }),
             }),
             render_1.renderSection({
                 title: `🎉 ${diff.smaller.length} ${render_1.pluralize(diff.smaller.length, 'bundle', 'bundles')} got smaller`,
-                assets: diff.smaller,
-                formatter: render_1.renderSmallerTable,
+                isEmpty: diff.smaller.length === 0,
+                children: render_1.renderSmallerTable({ assets: diff.smaller }),
             }),
             render_1.renderSection({
                 title: `🤔 ${diff.added.length} ${render_1.pluralize(diff.added.length, 'bundle was', 'bundles were')} added`,
-                assets: diff.added,
-                formatter: render_1.renderAddedTable,
+                isEmpty: diff.added.length === 0,
+                children: render_1.renderAddedTable({ assets: diff.added }),
             }),
             render_1.renderSection({
                 title: `👏 ${diff.removed.length} ${render_1.pluralize(diff.removed.length, 'bundle was', 'bundles were')} removed`,
-                assets: diff.removed,
-                formatter: render_1.renderRemovedTable,
+                isEmpty: diff.removed.length === 0,
+                children: render_1.renderRemovedTable({ assets: diff.removed }),
             }),
             render_1.renderReductionCelebration({ diff }),
             '---',
@@ -6410,13 +6414,11 @@ const formatBytes = (bytes, { signed } = {}) => (bytes / 1000).toLocaleString('e
     unitDisplay: 'short',
 });
 const formatRatio = (ratio) => ratio.toLocaleString('en', { style: 'percent', maximumFractionDigits: 0 });
-function renderSection({ title, assets, formatter, }) {
-    return assets.length > 0
-        ? `
-  #### ${title}
-  ${assets.length > 0 ? formatter({ assets }) : 'No relevant assets.'}
-  `
-        : '';
+function renderSection({ title, isEmpty = false, children, }) {
+    return `
+#### ${title}
+${!isEmpty ? children : 'No relevant changes.'}
+`;
 }
 exports.renderSection = renderSection;
 function renderSummaryTable({ diff }) {

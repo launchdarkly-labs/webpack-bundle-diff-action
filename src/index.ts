@@ -11,6 +11,7 @@ import {
   renderRemovedTable,
   renderSmallerTable,
   renderReductionCelebration,
+  renderSummaryTable,
   pluralize,
   renderGithubCompareLink,
 } from './render';
@@ -85,7 +86,7 @@ async function run() {
     // Avoid adding noise to backend-only PRs
     if (numberOfChanges === 0) {
       core.info(
-        `No bundle changes to report for ${repo}#${pullRequestId} at ${baseSha}…${headSha}`,
+        `No significant bundle changes to report for ${repo}#${pullRequestId} at ${baseSha}…${headSha}`,
       );
       return;
     }
@@ -97,15 +98,22 @@ async function run() {
         baseSha,
         headSha,
       )}`,
+
       'Sizes are minified bytes, and not gzipped.',
+
+      renderSection({
+        title: 'Summary of changes',
+        children: renderSummaryTable({ diff }),
+      }),
+
       renderSection({
         title: `⚠️ ${diff.bigger.length} ${pluralize(
           diff.bigger.length,
           'bundle',
           'bundles',
         )} got bigger`,
-        assets: diff.bigger,
-        formatter: renderBiggerTable,
+        isEmpty: diff.bigger.length === 0,
+        children: renderBiggerTable({ assets: diff.bigger }),
       }),
 
       renderSection({
@@ -114,8 +122,8 @@ async function run() {
           'bundle',
           'bundles',
         )} got smaller`,
-        assets: diff.smaller,
-        formatter: renderSmallerTable,
+        isEmpty: diff.smaller.length === 0,
+        children: renderSmallerTable({ assets: diff.smaller }),
       }),
 
       renderSection({
@@ -124,8 +132,8 @@ async function run() {
           'bundle was',
           'bundles were',
         )} added`,
-        assets: diff.added,
-        formatter: renderAddedTable,
+        isEmpty: diff.added.length === 0,
+        children: renderAddedTable({ assets: diff.added }),
       }),
 
       renderSection({
@@ -134,8 +142,8 @@ async function run() {
           'bundle was',
           'bundles were',
         )} removed`,
-        assets: diff.removed,
-        formatter: renderRemovedTable,
+        isEmpty: diff.removed.length === 0,
+        children: renderRemovedTable({ assets: diff.removed }),
       }),
 
       renderReductionCelebration({ diff }),
