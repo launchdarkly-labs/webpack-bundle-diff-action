@@ -4220,11 +4220,11 @@ async function run() {
             .reduce((total, size) => total + size, 0);
         let body;
         if (numberOfChanges === 0) {
-            body = `No significant bundle changes at ${render_1.renderGithubCompareLink(baseSha, headSha)}`;
+            body = `No significant bundle changes for ${render_1.renderGithubCompareLink(baseSha, headSha)}.`;
         }
         else {
             body = [
-                `### Comparing bundles sizes at ${render_1.renderGithubCompareLink(baseSha, headSha)}`,
+                `### Comparing bundles sizes for ${render_1.renderGithubCompareLink(baseSha, headSha)}`,
                 'Sizes are minified bytes, and not gzipped.',
                 render_1.renderSection({
                     title: 'Summary of changes',

@@ -126,13 +126,13 @@ async function run() {
 
     let body: string;
     if (numberOfChanges === 0) {
-      body = `No significant bundle changes at ${renderGithubCompareLink(
+      body = `No significant bundle changes for ${renderGithubCompareLink(
         baseSha,
         headSha,
-      )}`;
+      )}.`;
     } else {
       body = [
-        `### Comparing bundles sizes at ${renderGithubCompareLink(
+        `### Comparing bundles sizes for ${renderGithubCompareLink(
           baseSha,
           headSha,
         )}`,
