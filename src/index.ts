@@ -16,6 +16,8 @@ import {
   renderGithubCompareLink,
 } from './render';
 
+const frontendExtensions = ['js', 'css', 'ts', 'tsx'];
+
 async function assertFileExists(path: string) {
   return new Promise<void>((resolve, reject) =>
     access(path, constants.F_OK, (error) =>
@@ -26,6 +28,12 @@ async function assertFileExists(path: string) {
 
 async function run() {
   try {
+    if (github.context.eventName !== 'pull_request') {
+      core.setFailed(
+        `This action only supports pull requests. ${github.context.eventName} events are not supported.`,
+      );
+    }
+
     const inputs = {
       base: {
         stats: core.getInput('base-stats-path'),
@@ -41,11 +49,45 @@ async function run() {
     const runId = github.context.runId;
     const owner = github.context.repo.owner;
     const repo = github.context.repo.repo;
-    const headSha = github.context.sha;
+    const headSha = github.context.payload.pull_request?.head.sha;
     const baseSha = github.context.payload.pull_request?.base.sha;
     const pullRequestId = github.context.issue.number;
     if (!pullRequestId) {
       throw new Error('Could not find the PR id');
+    }
+
+    const octokit = github.getOctokit(inputs.githubToken);
+
+    const commitComparison = await octokit.repos.compareCommits({
+      base: baseSha,
+      head: headSha,
+      owner,
+      repo,
+    });
+
+    if (commitComparison.status !== 200) {
+      core.setFailed(
+        `The GitHub API for comparing the base and head commits for this ${github.context.eventName} event returned ${commitComparison.status}, expected 200.`,
+      );
+    }
+
+    const files = commitComparison.data.files ?? [];
+
+    let hasFrontendChanges: boolean = false;
+    for (let file of files) {
+      const filename = file.filename;
+      for (let extension of frontendExtensions) {
+        if (filename.endsWith(extension)) {
+          hasFrontendChanges = true;
+        }
+      }
+    }
+
+    if (!hasFrontendChanges) {
+      core.info(
+        `No frontend changes detected for ${repo}#${pullRequestId} at ${baseSha}…${headSha}. Nothing to do.`,
+      );
+      return;
     }
 
     const paths = {
@@ -82,78 +124,73 @@ async function run() {
       .map(([_, assets]) => assets.length)
       .reduce((total, size) => total + size, 0);
 
-    // If there are no changes whatsoever, don't report.
-    // Avoid adding noise to backend-only PRs
+    let body: string;
     if (numberOfChanges === 0) {
-      core.info(
-        `No significant bundle changes to report for ${repo}#${pullRequestId} at ${baseSha}…${headSha}`,
-      );
-      return;
-    }
-
-    const octokit = github.getOctokit(inputs.githubToken);
-
-    const body = [
-      `### Comparing bundles sizes between ${renderGithubCompareLink(
+      body = `No significant bundle changes at ${renderGithubCompareLink(
         baseSha,
         headSha,
-      )}`,
+      )}`;
+    } else {
+      body = [
+        `### Comparing bundles sizes at ${renderGithubCompareLink(
+          baseSha,
+          headSha,
+        )}`,
 
-      'Sizes are minified bytes, and not gzipped.',
+        'Sizes are minified bytes, and not gzipped.',
 
-      renderSection({
-        title: 'Summary of changes',
-        children: renderSummaryTable({ diff }),
-      }),
+        renderSection({
+          title: 'Summary of changes',
+          children: renderSummaryTable({ diff }),
+        }),
 
-      renderSection({
-        title: `⚠️ ${diff.bigger.length} ${pluralize(
-          diff.bigger.length,
-          'bundle',
-          'bundles',
-        )} got bigger`,
-        isEmpty: diff.bigger.length === 0,
-        children: renderBiggerTable({ assets: diff.bigger }),
-      }),
+        renderSection({
+          title: `⚠️ ${diff.bigger.length} ${pluralize(
+            diff.bigger.length,
+            'bundle',
+            'bundles',
+          )} got bigger`,
+          isEmpty: diff.bigger.length === 0,
+          children: renderBiggerTable({ assets: diff.bigger }),
+        }),
 
-      renderSection({
-        title: `🎉 ${diff.smaller.length} ${pluralize(
-          diff.smaller.length,
-          'bundle',
-          'bundles',
-        )} got smaller`,
-        isEmpty: diff.smaller.length === 0,
-        children: renderSmallerTable({ assets: diff.smaller }),
-      }),
+        renderSection({
+          title: `🎉 ${diff.smaller.length} ${pluralize(
+            diff.smaller.length,
+            'bundle',
+            'bundles',
+          )} got smaller`,
+          isEmpty: diff.smaller.length === 0,
+          children: renderSmallerTable({ assets: diff.smaller }),
+        }),
 
-      renderSection({
-        title: `🤔 ${diff.added.length} ${pluralize(
-          diff.added.length,
-          'bundle was',
-          'bundles were',
-        )} added`,
-        isEmpty: diff.added.length === 0,
-        children: renderAddedTable({ assets: diff.added }),
-      }),
+        renderSection({
+          title: `🤔 ${diff.added.length} ${pluralize(
+            diff.added.length,
+            'bundle was',
+            'bundles were',
+          )} added`,
+          isEmpty: diff.added.length === 0,
+          children: renderAddedTable({ assets: diff.added }),
+        }),
 
-      renderSection({
-        title: `👏 ${diff.removed.length} ${pluralize(
-          diff.removed.length,
-          'bundle was',
-          'bundles were',
-        )} removed`,
-        isEmpty: diff.removed.length === 0,
-        children: renderRemovedTable({ assets: diff.removed }),
-      }),
+        renderSection({
+          title: `👏 ${diff.removed.length} ${pluralize(
+            diff.removed.length,
+            'bundle was',
+            'bundles were',
+          )} removed`,
+          isEmpty: diff.removed.length === 0,
+          children: renderRemovedTable({ assets: diff.removed }),
+        }),
 
-      renderReductionCelebration({ diff }),
+        renderReductionCelebration({ diff }),
 
-      '---',
+        '---',
 
-      `[Visit the workflow page](https://github.com/launchdarkly/gonfalon/actions/runs/${runId}) to download the artifacts for this run. You can visualize those with [webpack-bundle-analyzer](https://github.com/webpack-contrib/webpack-bundle-analyzer) or online with [statoscope](https://statoscope.tech/).`,
-    ]
-      .filter((section) => !!section)
-      .join('\n');
+        `[Visit the workflow page](https://github.com/launchdarkly/gonfalon/actions/runs/${runId}) to download the artifacts for this run. You can visualize those with [webpack-bundle-analyzer](https://github.com/webpack-contrib/webpack-bundle-analyzer) or online with [statoscope](https://statoscope.tech/).`,
+      ].join('\n');
+    }
 
     await octokit.issues.createComment({
       owner,
@@ -163,9 +200,8 @@ async function run() {
     });
 
     core.info(
-      `Webpack bundle diff for PR ${repo}#${pullRequestId} at ${baseSha}…${headSha}`,
+      `Reported on webpack bundle diff for PR ${repo}#${pullRequestId} at ${baseSha}…${headSha} successfully`,
     );
-    core.info(body);
   } catch (error) {
     core.setFailed(error);
   }

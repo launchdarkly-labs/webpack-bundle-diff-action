@@ -41,7 +41,7 @@ export function renderSection({
 }) {
   return `
 #### ${title}
-${!isEmpty ? children : 'No relevant changes.'}
+${!isEmpty ? children : 'No significant changes.'}
 `;
 }
 
