@@ -18,15 +18,16 @@ exports[`bigger diff 1`] = `
 exports[`empty section 1`] = `
 "
 #### ⚠️ 3 bundles got bigger
-No relevant changes.
+No significant changes.
 "
 `;
 
 exports[`reduction celebration 1`] = `undefined`;
 
 exports[`removed diff 1`] = `
-"| Asset | Size ▾ |
-| :---- | -----: |"
+"| Asset                 |   Size ▾ |
+| :-------------------- | -------: |
+| \`AcceptInvitation.js\` | \`316 kB\` |"
 `;
 
 exports[`section 1`] = `
@@ -72,8 +73,8 @@ exports[`summary 1`] = `
 | Bigger    |     \`+960 kB\` |
 | Smaller   |   \`-2,911 kB\` |
 | Added     |   \`+1,366 kB\` |
-| Removed   |       \`+0 kB\` |
-| **Total** | **\`-586 kB\`** |"
+| Removed   |     \`-316 kB\` |
+| **Total** | **\`-901 kB\`** |"
 `;
 
 exports[`unchanged diff 1`] = `
@@ -86,7 +87,6 @@ exports[`unchanged diff 1`] = `
 | CreateOrJoinContainer.js          |   346 kB |
 | quickstart.entry.js               |   343 kB |
 | ManageTeamContainer.js            |   314 kB |
-| AcceptInvitation.js               |   316 kB |
 | newHires.js                       |   300 kB |
 | codemirror.js                     |   226 kB |
 | PasswordContainer.js              |   213 kB |

@@ -3878,7 +3878,7 @@ function getDiff(analysis, { diffThreshold = DEFAULT_DIFF_THRESHOLD } = {}) {
                 name,
                 baseSize: baseAsset.parsedSize,
                 headSize,
-                delta: baseSize,
+                delta: -baseSize,
                 ratio: -1,
             });
         }

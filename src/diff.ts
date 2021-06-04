@@ -139,7 +139,7 @@ export function getDiff(
         name,
         baseSize: baseAsset.parsedSize,
         headSize,
-        delta: baseSize,
+        delta: -baseSize,
         ratio: -1,
       });
     } else {
