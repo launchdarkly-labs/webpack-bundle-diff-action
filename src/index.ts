@@ -36,11 +36,9 @@ async function run() {
 
     const inputs = {
       base: {
-        stats: core.getInput('base-stats-path'),
         report: core.getInput('base-bundle-analysis-report-path'),
       },
       head: {
-        stats: core.getInput('head-stats-path'),
         report: core.getInput('head-bundle-analysis-report-path'),
       },
       githubToken: core.getInput('github-token'),
@@ -92,27 +90,21 @@ async function run() {
 
     const paths = {
       base: {
-        stats: path.resolve(process.cwd(), inputs.base.stats),
         report: path.resolve(process.cwd(), inputs.base.report),
       },
       head: {
-        stats: path.resolve(process.cwd(), inputs.head.stats),
         report: path.resolve(process.cwd(), inputs.head.report),
       },
     };
 
-    assertFileExists(paths.base.stats);
     assertFileExists(paths.base.report);
-    assertFileExists(paths.head.stats);
     assertFileExists(paths.head.report);
 
     const analysis = {
       base: {
-        stats: require(paths.base.stats),
         report: require(paths.base.report),
       },
       head: {
-        stats: require(paths.head.stats),
         report: require(paths.head.report),
       },
     };

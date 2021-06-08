@@ -13,11 +13,9 @@ import {
 
 const diff = getDiff({
   base: {
-    stats: require('../base-webpack-stats.json'),
     report: require('../base-webpack-bundle-analyzer-report.json'),
   },
   head: {
-    stats: require('../head-webpack-stats.json'),
     report: require('../head-webpack-bundle-analyzer-report.json'),
   },
 });

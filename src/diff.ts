@@ -1,22 +1,7 @@
 // Mostly based off of https://github.com/ZachGawlik/webpack-stats-diff/tree/master/src with better
 // support for contenthash, typescript, etc…
 
-import type { StatsCompilation, StatsAsset } from 'webpack';
 import type { BundleAnalyzerPlugin } from 'webpack-bundle-analyzer';
-
-// We tweak the Webpack stats type to make,
-//   - assetsByChunkName and assets required
-//   - only require name and size on assets
-type Modify<T, R> = Omit<T, keyof R> & R;
-
-type WebpackAsset = Pick<StatsAsset, 'name' | 'size'>;
-
-type WebpackStats = Modify<
-  StatsCompilation,
-  {
-    assets: WebpackAsset[];
-  }
->;
 
 type FunkyAsset = {
   name: string;
@@ -60,8 +45,8 @@ const parseAssetName = (name: string) => {
 
 export function getDiff(
   analysis: {
-    base: { stats: WebpackStats; report: BundleAnalyzerPlugin.JsonReport };
-    head: { stats: WebpackStats; report: BundleAnalyzerPlugin.JsonReport };
+    base: { report: BundleAnalyzerPlugin.JsonReport };
+    head: { report: BundleAnalyzerPlugin.JsonReport };
   },
   { diffThreshold = DEFAULT_DIFF_THRESHOLD }: { diffThreshold?: number } = {},
 ): Diff {

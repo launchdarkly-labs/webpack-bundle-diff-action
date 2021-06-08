@@ -1,14 +1,8 @@
 name: 'Webpack stats diff'
 description: 'Adds a comment to your pull request with a summary of webpack stats changes between two builds'
 inputs:
-  base-stats-path:
-    description: 'The path to the json stats file for the base branch'
-    required: true
   base-bundle-analysis-report-path:
     description: 'The path to the json webpack-bundle-analyzer report file for the base branch'
-    required: true
-  head-stats-path:
-    description: 'The path to the json stats file for the pull request branch'
     required: true
   head-bundle-analysis-report-path:
     description: 'The path to the json webpack-bundle-analyzer report file for the head branch'
