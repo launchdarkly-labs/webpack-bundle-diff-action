@@ -7,7 +7,7 @@ inputs:
     default: '.05'
   warning-label:
     description: 'The label to add to PRs that increased the size of any bundle'
-    required:true
+    required: true
     default: '⚠️ bundle increase'
   base-bundle-analysis-report-path:
     description: 'The path to the json webpack-bundle-analyzer report file for the base branch'
