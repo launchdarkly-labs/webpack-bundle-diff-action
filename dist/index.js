@@ -4421,7 +4421,8 @@ async function run() {
         }
         const inputs = {
             diffThreshold: parseFloat(core.getInput('diff-threshold')),
-            warningLabel: core.getInput('warning-label'),
+            increaseLabel: core.getInput('increase-label'),
+            decreaseLabel: core.getInput('decrease-label'),
             base: {
                 report: core.getInput('base-bundle-analysis-report-path'),
             },
@@ -4537,7 +4538,7 @@ async function run() {
                 owner,
                 repo,
                 issue_number: pullRequestId,
-                labels: [inputs.warningLabel],
+                labels: [inputs.increaseLabel],
             });
         }
         else {
@@ -4546,17 +4547,48 @@ async function run() {
                 repo,
                 issue_number: pullRequestId,
             });
-            if (labels.data.find((label) => label.name === inputs.warningLabel)) {
+            if (labels.data.find((label) => label.name === inputs.increaseLabel)) {
                 try {
                     await octokit.rest.issues.removeLabel({
                         owner,
                         repo,
                         issue_number: pullRequestId,
-                        name: inputs.warningLabel,
+                        name: inputs.increaseLabel,
                     });
                 }
                 catch (error) {
-                    core.warning(`Failed to remove "${inputs.warningLabel}" label from PR ${pullRequestId}`);
+                    core.warning(`Failed to remove "${inputs.increaseLabel}" label from PR ${pullRequestId}`);
+                }
+            }
+        }
+        // If there was a decrease in bundle size, add a label to the pull request
+        // It's possible there was a net increase, and that some critical bundles
+        // decreased.
+        if (diff.removed.length > 0 || diff.smaller.length > 0) {
+            await octokit.rest.issues.addLabels({
+                owner,
+                repo,
+                issue_number: pullRequestId,
+                labels: [inputs.decreaseLabel],
+            });
+        }
+        else {
+            const labels = await octokit.rest.issues.listLabelsOnIssue({
+                owner,
+                repo,
+                issue_number: pullRequestId,
+            });
+            if (labels.data.find((label) => label.name === inputs.decreaseLabel)) {
+                try {
+                    await octokit.rest.issues.removeLabel({
+                        owner,
+                        repo,
+                        issue_number: pullRequestId,
+                        name: inputs.decreaseLabel,
+                    });
+                }
+                catch (error) {
+                    core.warning(`Failed to remove "${inputs.decreaseLabel}" label from PR ${pullRequestId}`);
                 }
             }
         }

@@ -5,10 +5,14 @@ inputs:
     description: 'Report any change in bundle size if it changed by more than "diff-threshold"'
     required: true
     default: '.05'
-  warning-label:
+  increase-label:
     description: 'The label to add to PRs that increased the size of any bundle'
     required: true
     default: '⚠️ bundle increase'
+  decrease-label:
+    description: 'The label to add to PRs that decreased the size of any bundle'
+    required: true
+    default: '🎉 bundle decrease'
   base-bundle-analysis-report-path:
     description: 'The path to the json webpack-bundle-analyzer report file for the base branch'
     required: true
