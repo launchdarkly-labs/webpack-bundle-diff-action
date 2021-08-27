@@ -1,6 +1,14 @@
 name: 'Webpack stats diff'
 description: 'Adds a comment to your pull request with a summary of webpack stats changes between two builds'
 inputs:
+  diff-threshold:
+    description: 'Report any change in bundle size if it changed by more than "diff-threshold"'
+    required: true
+    default: '.05'
+  warning-label:
+    description: 'The label to add to PRs that increased the size of any bundle'
+    required:true
+    default: '⚠️ bundle increase'
   base-bundle-analysis-report-path:
     description: 'The path to the json webpack-bundle-analyzer report file for the base branch'
     required: true

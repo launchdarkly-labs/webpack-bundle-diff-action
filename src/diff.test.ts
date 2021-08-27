@@ -11,14 +11,17 @@ import {
   pluralize,
 } from './render';
 
-const diff = getDiff({
-  base: {
-    report: require('../base-webpack-bundle-analyzer-report.json'),
+const diff = getDiff(
+  {
+    base: {
+      report: require('../base-webpack-bundle-analyzer-report.json'),
+    },
+    head: {
+      report: require('../head-webpack-bundle-analyzer-report.json'),
+    },
   },
-  head: {
-    report: require('../head-webpack-bundle-analyzer-report.json'),
-  },
-});
+  { diffThreshold: 0.05 },
+);
 
 test('section', () => {
   expect(

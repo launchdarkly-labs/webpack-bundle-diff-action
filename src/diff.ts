@@ -26,8 +26,6 @@ export type Diff = {
   unchanged: AssetDiff[];
 };
 
-const DEFAULT_DIFF_THRESHOLD = 0.05; // 5%
-
 const ASSET_NAME_REGEXP = /^(?<assetname>[a-zA-Z0-9\.\-_]+)\.([a-zA-Z0-9]{20})\.(?<extension>js|css)$/;
 
 const parseAssetName = (name: string) => {
@@ -48,7 +46,7 @@ export function getDiff(
     base: { report: BundleAnalyzerPlugin.JsonReport };
     head: { report: BundleAnalyzerPlugin.JsonReport };
   },
-  { diffThreshold = DEFAULT_DIFF_THRESHOLD }: { diffThreshold?: number } = {},
+  { diffThreshold }: { diffThreshold: number },
 ): Diff {
   const byName: {
     base: Record<string, FunkyAsset>;

@@ -35,6 +35,8 @@ async function run() {
     }
 
     const inputs = {
+      diffThreshold: parseFloat(core.getInput('diff-threshold')),
+      warningLabel: core.getInput('warning-label'),
       base: {
         report: core.getInput('base-bundle-analysis-report-path'),
       },
@@ -56,7 +58,7 @@ async function run() {
 
     const octokit = github.getOctokit(inputs.githubToken);
 
-    const commitComparison = await octokit.repos.compareCommits({
+    const commitComparison = await octokit.rest.repos.compareCommits({
       base: baseSha,
       head: headSha,
       owner,
@@ -109,7 +111,7 @@ async function run() {
       },
     };
 
-    const diff = getDiff(analysis);
+    const diff = getDiff(analysis, { diffThreshold: inputs.diffThreshold });
 
     const numberOfChanges = Object.entries(diff)
       .filter(([kind]) => kind !== 'unchanged')
@@ -184,12 +186,45 @@ async function run() {
       ].join('\n');
     }
 
-    await octokit.issues.createComment({
+    await octokit.rest.issues.createComment({
       owner,
       repo,
       issue_number: pullRequestId,
       body,
     });
+
+    // If there was an increase in bundle size, add a label to the pull request
+    // It's possible there was a net decrease, and that some critical bundles
+    // increased.
+    if (diff.added.length > 0 || diff.bigger.length > 0) {
+      await octokit.rest.issues.addLabels({
+        owner,
+        repo,
+        issue_number: pullRequestId,
+        labels: [inputs.warningLabel],
+      });
+    } else {
+      const labels = await octokit.rest.issues.listLabelsOnIssue({
+        owner,
+        repo,
+        issue_number: pullRequestId,
+      });
+
+      if (labels.data.find((label) => label.name === inputs.warningLabel)) {
+        try {
+          await octokit.rest.issues.removeLabel({
+            owner,
+            repo,
+            issue_number: pullRequestId,
+            name: inputs.warningLabel,
+          });
+        } catch (error) {
+          core.warning(
+            `Failed to remove "${inputs.warningLabel}" label from PR ${pullRequestId}`,
+          );
+        }
+      }
+    }
 
     core.info(
       `Reported on webpack bundle diff for PR ${repo}#${pullRequestId} at ${baseSha}…${headSha} successfully`,
