@@ -4409,7 +4409,7 @@ const fs_1 = __webpack_require__(747);
 const path = __importStar(__webpack_require__(622));
 const diff_1 = __webpack_require__(489);
 const render_1 = __webpack_require__(897);
-const frontendExtensions = ['js', 'css', 'ts', 'tsx'];
+const frontendExtensions = ['js', 'css', 'ts', 'tsx', 'json'];
 async function assertFileExists(path) {
     return new Promise((resolve, reject) => fs_1.access(path, fs_1.constants.F_OK, (error) => error ? reject(new Error(`${path} does not exist`)) : resolve()));
 }

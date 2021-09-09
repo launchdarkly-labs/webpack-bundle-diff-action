@@ -16,7 +16,7 @@ import {
   renderGithubCompareLink,
 } from './render';
 
-const frontendExtensions = ['js', 'css', 'ts', 'tsx'];
+const frontendExtensions = ['js', 'css', 'ts', 'tsx', 'json'];
 
 async function assertFileExists(path: string) {
   return new Promise<void>((resolve, reject) =>
