@@ -21,14 +21,21 @@ const formatBytes = (
   bytes: number,
   {
     signed,
+    minimumFractionDigits = 0,
     maximumFractionDigits = 0,
-  }: { signed?: boolean; maximumFractionDigits?: number } = {
+  }: {
+    signed?: boolean;
+    minimumFractionDigits?: number;
+    maximumFractionDigits?: number;
+  } = {
+    minimumFractionDigits: 0,
     maximumFractionDigits: 0,
   },
 ) =>
   (bytes / 1000).toLocaleString('en', {
     // @ts-ignore: typescript type defs don't know about signDisplay yet
     signDisplay: signed ? 'always' : 'auto',
+    minimumFractionDigits,
     maximumFractionDigits,
     style: 'unit',
     unit: 'kilobyte',
@@ -37,10 +44,19 @@ const formatBytes = (
 
 export const formatRatio = (
   ratio: number,
-  { maximumFractionDigits }: { maximumFractionDigits?: number } = {
+  {
+    minimumFractionDigits = 0,
+    maximumFractionDigits = 0,
+  }: { minimumFractionDigits?: number; maximumFractionDigits?: number } = {
+    minimumFractionDigits: 0,
     maximumFractionDigits: 0,
   },
-) => ratio.toLocaleString('en', { style: 'percent', maximumFractionDigits });
+) =>
+  ratio.toLocaleString('en', {
+    style: 'percent',
+    minimumFractionDigits,
+    maximumFractionDigits,
+  });
 
 export function renderSection({
   title,
@@ -151,31 +167,34 @@ export function renderNegligibleTable({ assets }: { assets: AssetDiff[] }) {
   return markdownTable(
     [
       ['Asset', 'Base size', 'Head size', sortedColumn('Delta'), 'Delta %'],
-      ...assets
-        .filter((asset) => asset.ratio > 0.0001)
-        .sort(deltaDescending)
-        .map((asset) => [
-          md.code(asset.name),
-          md.code(
-            formatBytes(asset.baseSize, {
-              signed: true,
-              maximumFractionDigits: 3,
-            }),
-          ),
-          md.code(
-            formatBytes(asset.headSize, {
-              signed: true,
-              maximumFractionDigits: 3,
-            }),
-          ),
-          md.code(
-            formatBytes(asset.delta, {
-              signed: true,
-              maximumFractionDigits: 3,
-            }),
-          ),
-          md.code(formatRatio(asset.ratio, { maximumFractionDigits: 3 })),
-        ]),
+      ...assets.sort(deltaDescending).map((asset) => [
+        md.code(asset.name),
+        md.code(
+          formatBytes(asset.baseSize, {
+            minimumFractionDigits: 3,
+            maximumFractionDigits: 3,
+          }),
+        ),
+        md.code(
+          formatBytes(asset.headSize, {
+            minimumFractionDigits: 3,
+            maximumFractionDigits: 3,
+          }),
+        ),
+        md.code(
+          formatBytes(asset.delta, {
+            signed: true,
+            minimumFractionDigits: 3,
+            maximumFractionDigits: 3,
+          }),
+        ),
+        md.code(
+          formatRatio(asset.ratio, {
+            minimumFractionDigits: 3,
+            maximumFractionDigits: 3,
+          }),
+        ),
+      ]),
     ],
     { align: ['l', 'r', 'r', 'r', 'r'] },
   );

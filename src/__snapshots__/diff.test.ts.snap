@@ -23,15 +23,15 @@ No significant changes.
 `;
 
 exports[`negligible diff 1`] = `
-"| Asset                            |     Base size |     Head size |     Delta ▾ |  Delta % |
-| :------------------------------- | ------------: | ------------: | ----------: | -------: |
-| \`ManageFlagSettingsContainer.js\` |  \`+88.853 kB\` |  \`+91.828 kB\` | \`+2.975 kB\` | \`3.348%\` |
-| \`FlagInsightsContainer.js\`       | \`+171.798 kB\` | \`+174.617 kB\` | \`+2.819 kB\` | \`1.641%\` |
-| \`FlagHistoryContainer.js\`        | \`+159.908 kB\` | \`+160.174 kB\` | \`+0.266 kB\` | \`0.166%\` |
-| \`runtime.js\`                     |   \`+9.798 kB\` |  \`+10.053 kB\` | \`+0.255 kB\` | \`2.603%\` |
-| \`RuleExclusionContainer.js\`      |  \`+38.484 kB\` |  \`+38.507 kB\` | \`+0.023 kB\` |  \`0.06%\` |
-| \`flags.entry.js\`                 |    \`+3.83 kB\` |   \`+3.842 kB\` | \`+0.012 kB\` | \`0.313%\` |
-| \`ThirdPartyWidgets.js\`           |  \`+13.177 kB\` |  \`+13.179 kB\` | \`+0.002 kB\` | \`0.015%\` |"
+"| Asset                            |    Base size |    Head size |     Delta ▾ |  Delta % |
+| :------------------------------- | -----------: | -----------: | ----------: | -------: |
+| \`ManageFlagSettingsContainer.js\` |  \`88.853 kB\` |  \`91.828 kB\` | \`+2.975 kB\` | \`3.348%\` |
+| \`FlagInsightsContainer.js\`       | \`171.798 kB\` | \`174.617 kB\` | \`+2.819 kB\` | \`1.641%\` |
+| \`FlagHistoryContainer.js\`        | \`159.908 kB\` | \`160.174 kB\` | \`+0.266 kB\` | \`0.166%\` |
+| \`runtime.js\`                     |   \`9.798 kB\` |  \`10.053 kB\` | \`+0.255 kB\` | \`2.603%\` |
+| \`RuleExclusionContainer.js\`      |  \`38.484 kB\` |  \`38.507 kB\` | \`+0.023 kB\` | \`0.060%\` |
+| \`flags.entry.js\`                 |   \`3.830 kB\` |   \`3.842 kB\` | \`+0.012 kB\` | \`0.313%\` |
+| \`ThirdPartyWidgets.js\`           |  \`13.177 kB\` |  \`13.179 kB\` | \`+0.002 kB\` | \`0.015%\` |"
 `;
 
 exports[`reduction celebration 1`] = `undefined`;

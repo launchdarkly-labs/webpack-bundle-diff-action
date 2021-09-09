@@ -4520,7 +4520,7 @@ async function run() {
                     children: render_1.renderRemovedTable({ assets: diff.removed }),
                 }),
                 render_1.renderCollapsibleSection({
-                    title: `🧐 ${diff.unchanged.length} ${render_1.pluralize(diff.unchanged.length, 'bundle', 'bundles')} changed by less than ${render_1.formatRatio(inputs.diffThreshold)}`,
+                    title: `${diff.unchanged.filter((asset) => asset.ratio > 0.0001).length} ${render_1.pluralize(diff.unchanged.length, 'bundle', 'bundles')} changed by less than ${render_1.formatRatio(inputs.diffThreshold)} 🧐`,
                     isEmpty: diff.unchanged.length === 0,
                     children: render_1.renderNegligibleTable({ assets: diff.unchanged }),
                 }),
@@ -6826,19 +6826,26 @@ const md = {
     emphasis: (s) => `**${s}**`,
     code: (s) => `\`${s}\``,
 };
-const formatBytes = (bytes, { signed, maximumFractionDigits = 0, } = {
+const formatBytes = (bytes, { signed, minimumFractionDigits = 0, maximumFractionDigits = 0, } = {
+    minimumFractionDigits: 0,
     maximumFractionDigits: 0,
 }) => (bytes / 1000).toLocaleString('en', {
     // @ts-ignore: typescript type defs don't know about signDisplay yet
     signDisplay: signed ? 'always' : 'auto',
+    minimumFractionDigits,
     maximumFractionDigits,
     style: 'unit',
     unit: 'kilobyte',
     unitDisplay: 'short',
 });
-const formatRatio = (ratio, { maximumFractionDigits } = {
+const formatRatio = (ratio, { minimumFractionDigits = 0, maximumFractionDigits = 0, } = {
+    minimumFractionDigits: 0,
     maximumFractionDigits: 0,
-}) => ratio.toLocaleString('en', { style: 'percent', maximumFractionDigits });
+}) => ratio.toLocaleString('en', {
+    style: 'percent',
+    minimumFractionDigits,
+    maximumFractionDigits,
+});
 exports.formatRatio = formatRatio;
 function renderSection({ title, isEmpty = false, children, }) {
     return `
@@ -6906,24 +6913,25 @@ exports.renderRemovedTable = renderRemovedTable;
 function renderNegligibleTable({ assets }) {
     return markdown_table_1.default([
         ['Asset', 'Base size', 'Head size', sortedColumn('Delta'), 'Delta %'],
-        ...assets
-            .filter((asset) => asset.ratio > 0.0001)
-            .sort(deltaDescending)
-            .map((asset) => [
+        ...assets.sort(deltaDescending).map((asset) => [
             md.code(asset.name),
             md.code(formatBytes(asset.baseSize, {
-                signed: true,
+                minimumFractionDigits: 3,
                 maximumFractionDigits: 3,
             })),
             md.code(formatBytes(asset.headSize, {
-                signed: true,
+                minimumFractionDigits: 3,
                 maximumFractionDigits: 3,
             })),
             md.code(formatBytes(asset.delta, {
                 signed: true,
+                minimumFractionDigits: 3,
                 maximumFractionDigits: 3,
             })),
-            md.code(exports.formatRatio(asset.ratio, { maximumFractionDigits: 3 })),
+            md.code(exports.formatRatio(asset.ratio, {
+                minimumFractionDigits: 3,
+                maximumFractionDigits: 3,
+            })),
         ]),
     ], { align: ['l', 'r', 'r', 'r', 'r'] });
 }

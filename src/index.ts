@@ -183,11 +183,13 @@ async function run() {
         }),
 
         renderCollapsibleSection({
-          title: `🧐 ${diff.unchanged.length} ${pluralize(
+          title: `${
+            diff.unchanged.filter((asset) => asset.ratio > 0.0001).length
+          } ${pluralize(
             diff.unchanged.length,
             'bundle',
             'bundles',
-          )} changed by less than ${formatRatio(inputs.diffThreshold)}`,
+          )} changed by less than ${formatRatio(inputs.diffThreshold)} 🧐`,
           isEmpty: diff.unchanged.length === 0,
           children: renderNegligibleTable({ assets: diff.unchanged }),
         }),
