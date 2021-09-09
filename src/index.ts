@@ -6,13 +6,16 @@ import * as path from 'path';
 import { getDiff } from './diff';
 import {
   renderSection,
+  renderCollapsibleSection,
   renderAddedTable,
   renderBiggerTable,
   renderRemovedTable,
   renderSmallerTable,
   renderReductionCelebration,
   renderSummaryTable,
+  renderNegligibleTable,
   pluralize,
+  formatRatio,
   renderGithubCompareLink,
 } from './render';
 
@@ -177,6 +180,16 @@ async function run() {
           )} removed`,
           isEmpty: diff.removed.length === 0,
           children: renderRemovedTable({ assets: diff.removed }),
+        }),
+
+        renderCollapsibleSection({
+          title: `🧐 ${diff.unchanged.length} ${pluralize(
+            diff.unchanged.length,
+            'bundle',
+            'bundles',
+          )} changed by less than ${formatRatio(inputs.diffThreshold)}`,
+          isEmpty: diff.unchanged.length === 0,
+          children: renderNegligibleTable({ assets: diff.unchanged }),
         }),
 
         renderReductionCelebration({ diff }),

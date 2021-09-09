@@ -4519,6 +4519,11 @@ async function run() {
                     isEmpty: diff.removed.length === 0,
                     children: render_1.renderRemovedTable({ assets: diff.removed }),
                 }),
+                render_1.renderCollapsibleSection({
+                    title: `🧐 ${diff.unchanged.length} ${render_1.pluralize(diff.unchanged.length, 'bundle', 'bundles')} changed by less than ${render_1.formatRatio(inputs.diffThreshold)}`,
+                    isEmpty: diff.unchanged.length === 0,
+                    children: render_1.renderNegligibleTable({ assets: diff.unchanged }),
+                }),
                 render_1.renderReductionCelebration({ diff }),
                 '---',
                 `[Visit the workflow page](https://github.com/launchdarkly/gonfalon/actions/runs/${runId}) to download the artifacts for this run. You can visualize those with [webpack-bundle-analyzer](https://github.com/webpack-contrib/webpack-bundle-analyzer) or online with [statoscope](https://statoscope.tech/).`,
@@ -6812,7 +6817,7 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.renderReductionCelebration = exports.renderGithubCompareLink = exports.pluralize = exports.renderUnchangedTable = exports.renderSmallerTable = exports.renderBiggerTable = exports.renderRemovedTable = exports.renderAddedTable = exports.renderSummaryTable = exports.renderSection = void 0;
+exports.renderReductionCelebration = exports.renderGithubCompareLink = exports.pluralize = exports.renderUnchangedTable = exports.renderSmallerTable = exports.renderBiggerTable = exports.renderNegligibleTable = exports.renderRemovedTable = exports.renderAddedTable = exports.renderSummaryTable = exports.renderCollapsibleSection = exports.renderSection = exports.formatRatio = void 0;
 const markdown_table_1 = __importDefault(__webpack_require__(366));
 const sortedColumn = (name) => `${name} ▾`;
 const deltaDescending = (a, b) => Math.abs(b.delta) - Math.abs(a.delta);
@@ -6821,15 +6826,20 @@ const md = {
     emphasis: (s) => `**${s}**`,
     code: (s) => `\`${s}\``,
 };
-const formatBytes = (bytes, { signed } = {}) => (bytes / 1000).toLocaleString('en', {
+const formatBytes = (bytes, { signed, maximumFractionDigits = 0, } = {
+    maximumFractionDigits: 0,
+}) => (bytes / 1000).toLocaleString('en', {
     // @ts-ignore: typescript type defs don't know about signDisplay yet
     signDisplay: signed ? 'always' : 'auto',
-    maximumFractionDigits: 0,
+    maximumFractionDigits,
     style: 'unit',
     unit: 'kilobyte',
     unitDisplay: 'short',
 });
-const formatRatio = (ratio) => ratio.toLocaleString('en', { style: 'percent', maximumFractionDigits: 0 });
+const formatRatio = (ratio, { maximumFractionDigits } = {
+    maximumFractionDigits: 0,
+}) => ratio.toLocaleString('en', { style: 'percent', maximumFractionDigits });
+exports.formatRatio = formatRatio;
 function renderSection({ title, isEmpty = false, children, }) {
     return `
 #### ${title}
@@ -6837,6 +6847,17 @@ ${!isEmpty ? children : 'No significant changes.'}
 `;
 }
 exports.renderSection = renderSection;
+function renderCollapsibleSection({ title, isEmpty = false, children, }) {
+    return `
+<details>
+  <summary>${title}</summary>
+
+${!isEmpty ? children : 'No other changes.'}
+
+</details>
+`;
+}
+exports.renderCollapsibleSection = renderCollapsibleSection;
 function renderSummaryTable({ diff }) {
     const bigger = Object.values(diff.bigger).reduce((total, asset) => total + asset.delta, 0);
     const smaller = Object.values(diff.smaller).reduce((total, asset) => total + asset.delta, 0);
@@ -6882,6 +6903,31 @@ function renderRemovedTable({ assets }) {
     ], { align: ['l', 'r'] });
 }
 exports.renderRemovedTable = renderRemovedTable;
+function renderNegligibleTable({ assets }) {
+    return markdown_table_1.default([
+        ['Asset', 'Base size', 'Head size', sortedColumn('Delta'), 'Delta %'],
+        ...assets
+            .filter((asset) => asset.ratio > 0.0001)
+            .sort(deltaDescending)
+            .map((asset) => [
+            md.code(asset.name),
+            md.code(formatBytes(asset.baseSize, {
+                signed: true,
+                maximumFractionDigits: 3,
+            })),
+            md.code(formatBytes(asset.headSize, {
+                signed: true,
+                maximumFractionDigits: 3,
+            })),
+            md.code(formatBytes(asset.delta, {
+                signed: true,
+                maximumFractionDigits: 3,
+            })),
+            md.code(exports.formatRatio(asset.ratio, { maximumFractionDigits: 3 })),
+        ]),
+    ], { align: ['l', 'r', 'r', 'r', 'r'] });
+}
+exports.renderNegligibleTable = renderNegligibleTable;
 function renderBiggerTable({ assets }) {
     return markdown_table_1.default([
         ['Asset', 'Base size', 'Head size', sortedColumn('Delta'), 'Delta %'],
@@ -6892,7 +6938,7 @@ function renderBiggerTable({ assets }) {
             md.code(formatBytes(asset.baseSize)),
             md.code(formatBytes(asset.headSize)),
             md.code(formatBytes(asset.delta)),
-            md.code(formatRatio(asset.ratio)),
+            md.code(exports.formatRatio(asset.ratio)),
         ]),
     ], { align: ['l', 'r', 'r', 'r', 'r'] });
 }
@@ -6907,7 +6953,7 @@ function renderSmallerTable({ assets }) {
             md.code(formatBytes(asset.baseSize)),
             md.code(formatBytes(asset.headSize)),
             md.code(formatBytes(asset.delta)),
-            md.code(formatRatio(asset.ratio)),
+            md.code(exports.formatRatio(asset.ratio)),
         ]),
     ], { align: ['l', 'r', 'r', 'r', 'r'] });
 }

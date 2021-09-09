@@ -17,18 +17,30 @@ const md = {
   code: (s: string) => `\`${s}\``,
 };
 
-const formatBytes = (bytes: number, { signed }: { signed?: boolean } = {}) =>
+const formatBytes = (
+  bytes: number,
+  {
+    signed,
+    maximumFractionDigits = 0,
+  }: { signed?: boolean; maximumFractionDigits?: number } = {
+    maximumFractionDigits: 0,
+  },
+) =>
   (bytes / 1000).toLocaleString('en', {
     // @ts-ignore: typescript type defs don't know about signDisplay yet
     signDisplay: signed ? 'always' : 'auto',
-    maximumFractionDigits: 0,
+    maximumFractionDigits,
     style: 'unit',
     unit: 'kilobyte',
     unitDisplay: 'short',
   });
 
-const formatRatio = (ratio: number) =>
-  ratio.toLocaleString('en', { style: 'percent', maximumFractionDigits: 0 });
+export const formatRatio = (
+  ratio: number,
+  { maximumFractionDigits }: { maximumFractionDigits?: number } = {
+    maximumFractionDigits: 0,
+  },
+) => ratio.toLocaleString('en', { style: 'percent', maximumFractionDigits });
 
 export function renderSection({
   title,
@@ -42,6 +54,25 @@ export function renderSection({
   return `
 #### ${title}
 ${!isEmpty ? children : 'No significant changes.'}
+`;
+}
+
+export function renderCollapsibleSection({
+  title,
+  isEmpty = false,
+  children,
+}: {
+  title: string;
+  isEmpty?: boolean;
+  children: string;
+}) {
+  return `
+<details>
+  <summary>${title}</summary>
+
+${!isEmpty ? children : 'No other changes.'}
+
+</details>
 `;
 }
 
@@ -113,6 +144,40 @@ export function renderRemovedTable({ assets }: { assets: AssetDiff[] }) {
         ]),
     ],
     { align: ['l', 'r'] },
+  );
+}
+
+export function renderNegligibleTable({ assets }: { assets: AssetDiff[] }) {
+  return markdownTable(
+    [
+      ['Asset', 'Base size', 'Head size', sortedColumn('Delta'), 'Delta %'],
+      ...assets
+        .filter((asset) => asset.ratio > 0.0001)
+        .sort(deltaDescending)
+        .map((asset) => [
+          md.code(asset.name),
+          md.code(
+            formatBytes(asset.baseSize, {
+              signed: true,
+              maximumFractionDigits: 3,
+            }),
+          ),
+          md.code(
+            formatBytes(asset.headSize, {
+              signed: true,
+              maximumFractionDigits: 3,
+            }),
+          ),
+          md.code(
+            formatBytes(asset.delta, {
+              signed: true,
+              maximumFractionDigits: 3,
+            }),
+          ),
+          md.code(formatRatio(asset.ratio, { maximumFractionDigits: 3 })),
+        ]),
+    ],
+    { align: ['l', 'r', 'r', 'r', 'r'] },
   );
 }
 

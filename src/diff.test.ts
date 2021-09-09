@@ -8,6 +8,7 @@ import {
   renderUnchangedTable,
   renderSummaryTable,
   renderReductionCelebration,
+  renderNegligibleTable,
   pluralize,
 } from './render';
 
@@ -77,4 +78,8 @@ test('summary', () => {
 
 test('reduction celebration', () => {
   expect(renderReductionCelebration({ diff })).toMatchSnapshot();
+});
+
+test('negligible diff', () => {
+  expect(renderNegligibleTable({ assets: diff.unchanged })).toMatchSnapshot();
 });
