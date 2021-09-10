@@ -83,7 +83,7 @@ test('reduction celebration', () => {
 test('negligible diff', () => {
   expect(
     renderNegligibleTable({
-      assets: diff.unchanged.filter((asset) => asset.ratio > 0.0001),
+      assets: diff.unchanged.filter((asset) => Math.abs(asset.ratio) > 0.0001),
     }),
   ).toMatchSnapshot();
 });

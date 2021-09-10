@@ -184,7 +184,8 @@ async function run() {
 
         renderCollapsibleSection({
           title: `${
-            diff.unchanged.filter((asset) => asset.ratio > 0.0001).length
+            diff.unchanged.filter((asset) => Math.abs(asset.ratio) > 0.0001)
+              .length
           } ${pluralize(
             diff.unchanged.length,
             'bundle',
@@ -192,7 +193,9 @@ async function run() {
           )} changed by less than ${formatRatio(inputs.diffThreshold)} 🧐`,
           isEmpty: diff.unchanged.length === 0,
           children: renderNegligibleTable({
-            assets: diff.unchanged.filter((asset) => asset.ratio > 0.0001),
+            assets: diff.unchanged.filter(
+              (asset) => Math.abs(asset.ratio) > 0.0001,
+            ),
           }),
         }),
 
