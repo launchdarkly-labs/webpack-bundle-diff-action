@@ -191,7 +191,9 @@ async function run() {
             'bundles',
           )} changed by less than ${formatRatio(inputs.diffThreshold)} 🧐`,
           isEmpty: diff.unchanged.length === 0,
-          children: renderNegligibleTable({ assets: diff.unchanged }),
+          children: renderNegligibleTable({
+            assets: diff.unchanged.filter((asset) => asset.ratio > 0.0001),
+          }),
         }),
 
         renderReductionCelebration({ diff }),

@@ -4522,7 +4522,9 @@ async function run() {
                 render_1.renderCollapsibleSection({
                     title: `${diff.unchanged.filter((asset) => asset.ratio > 0.0001).length} ${render_1.pluralize(diff.unchanged.length, 'bundle', 'bundles')} changed by less than ${render_1.formatRatio(inputs.diffThreshold)} 🧐`,
                     isEmpty: diff.unchanged.length === 0,
-                    children: render_1.renderNegligibleTable({ assets: diff.unchanged }),
+                    children: render_1.renderNegligibleTable({
+                        assets: diff.unchanged.filter((asset) => asset.ratio > 0.0001),
+                    }),
                 }),
                 render_1.renderReductionCelebration({ diff }),
                 '---',
