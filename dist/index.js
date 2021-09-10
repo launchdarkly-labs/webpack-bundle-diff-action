@@ -4489,7 +4489,17 @@ async function run() {
             .reduce((total, size) => total + size, 0);
         let body;
         if (numberOfChanges === 0) {
-            body = `No significant bundle changes for ${render_1.renderGithubCompareLink(baseSha, headSha)}.`;
+            body = [
+                `No significant bundle changes for ${render_1.renderGithubCompareLink(baseSha, headSha)}.`,
+                render_1.renderCollapsibleSection({
+                    title: `${diff.unchanged.filter((asset) => Math.abs(asset.ratio) > 0.0001)
+                        .length} ${render_1.pluralize(diff.unchanged.length, 'bundle', 'bundles')} changed by less than ${render_1.formatRatio(inputs.diffThreshold)} 🧐`,
+                    isEmpty: diff.unchanged.length === 0,
+                    children: render_1.renderNegligibleTable({
+                        assets: diff.unchanged.filter((asset) => Math.abs(asset.ratio) > 0.0001),
+                    }),
+                }),
+            ].join('\n');
         }
         else {
             body = [
