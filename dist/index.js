@@ -4471,7 +4471,11 @@ async function run() {
         });
         let commitMessage;
         if (commit.status === 200) {
-            commitMessage = `${commit.data.message} ([${render_1.shortSha(commit.data.sha)}](https://github.com/launchdarkly/gonfalon/pull/${pullRequestId}/commits/${commit.data.sha}))`;
+            commitMessage = render_1.renderCommitSummary({
+                sha: commit.data.sha,
+                message: commit.data.message,
+                pullRequestId,
+            });
         }
         const paths = {
             base: {
@@ -6841,7 +6845,7 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.renderReductionCelebration = exports.renderGithubCompareLink = exports.shortSha = exports.pluralize = exports.renderUnchangedTable = exports.renderSmallerTable = exports.renderBiggerTable = exports.renderNegligibleTable = exports.renderRemovedTable = exports.renderAddedTable = exports.renderSummaryTable = exports.renderCollapsibleSection = exports.renderSection = exports.formatRatio = void 0;
+exports.renderReductionCelebration = exports.renderCommitSummary = exports.renderGithubCompareLink = exports.shortSha = exports.pluralize = exports.renderUnchangedTable = exports.renderSmallerTable = exports.renderBiggerTable = exports.renderNegligibleTable = exports.renderRemovedTable = exports.renderAddedTable = exports.renderSummaryTable = exports.renderCollapsibleSection = exports.renderSection = exports.formatRatio = void 0;
 const markdown_table_1 = __importDefault(__webpack_require__(366));
 const sortedColumn = (name) => `${name} ▾`;
 const deltaDescending = (a, b) => Math.abs(b.delta) - Math.abs(a.delta);
@@ -7021,6 +7025,12 @@ function renderGithubCompareLink(baseSha, headSha) {
     return `[${shortSha(baseSha)}…${shortSha(headSha)}](https://github.com/launchdarkly/gonfalon/compare/${baseSha}...${headSha} "Compare the head branch sha to the base branch sha for this run")`;
 }
 exports.renderGithubCompareLink = renderGithubCompareLink;
+function renderCommitSummary({ sha, message, pullRequestId, }) {
+    return `
+💬 _${message} ([${shortSha(sha)}](https://github.com/launchdarkly/gonfalon/pull/${pullRequestId}/commits/${sha}))_
+`;
+}
+exports.renderCommitSummary = renderCommitSummary;
 function renderReductionCelebration({ diff }) {
     if (diff.added.length === 0 &&
         diff.bigger.length === 0 &&

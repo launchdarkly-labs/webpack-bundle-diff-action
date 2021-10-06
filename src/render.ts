@@ -274,6 +274,22 @@ export function renderGithubCompareLink(baseSha: string, headSha: string) {
   )}](https://github.com/launchdarkly/gonfalon/compare/${baseSha}...${headSha} "Compare the head branch sha to the base branch sha for this run")`;
 }
 
+export function renderCommitSummary({
+  sha,
+  message,
+  pullRequestId,
+}: {
+  sha: string;
+  message: string;
+  pullRequestId: number;
+}) {
+  return `
+💬 _${message} ([${shortSha(
+    sha,
+  )}](https://github.com/launchdarkly/gonfalon/pull/${pullRequestId}/commits/${sha}))_
+`;
+}
+
 export function renderReductionCelebration({ diff }: { diff: Diff }) {
   if (
     diff.added.length === 0 &&

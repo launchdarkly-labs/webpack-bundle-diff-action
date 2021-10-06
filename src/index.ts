@@ -17,7 +17,7 @@ import {
   pluralize,
   formatRatio,
   renderGithubCompareLink,
-  shortSha,
+  renderCommitSummary,
 } from './render';
 
 const frontendExtensions = ['js', 'css', 'ts', 'tsx', 'json'];
@@ -103,11 +103,11 @@ async function run() {
 
     let commitMessage;
     if (commit.status === 200) {
-      commitMessage = `${commit.data.message} ([${shortSha(
-        commit.data.sha,
-      )}](https://github.com/launchdarkly/gonfalon/pull/${pullRequestId}/commits/${
-        commit.data.sha
-      }))`;
+      commitMessage = renderCommitSummary({
+        sha: commit.data.sha,
+        message: commit.data.message,
+        pullRequestId,
+      });
     }
 
     const paths = {
