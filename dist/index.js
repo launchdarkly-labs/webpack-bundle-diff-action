@@ -4471,7 +4471,7 @@ async function run() {
         });
         let commitMessage;
         if (commit.status === 200) {
-            commitMessage = commit.data.message;
+            commitMessage = `${commit.data.message} ([${render_1.shortSha(commit.data.sha)}](https://github.com/launchdarkly/gonfalon/pull/${pullRequestId}/commits/${commit.data.sha}))`;
         }
         const paths = {
             base: {
@@ -4499,6 +4499,7 @@ async function run() {
         let body;
         if (numberOfChanges === 0) {
             body = [
+                commitMessage,
                 `No significant bundle changes for ${render_1.renderGithubCompareLink(baseSha, headSha)}.`,
                 render_1.renderCollapsibleSection({
                     title: `${diff.unchanged.filter((asset) => Math.abs(asset.ratio) > 0.0001)
@@ -4512,6 +4513,7 @@ async function run() {
         }
         else {
             body = [
+                commitMessage,
                 `### Comparing bundles sizes for ${render_1.renderGithubCompareLink(baseSha, headSha)}`,
                 'Sizes are minified bytes, and not gzipped.',
                 render_1.renderSection({
@@ -6839,7 +6841,7 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.renderReductionCelebration = exports.renderGithubCompareLink = exports.pluralize = exports.renderUnchangedTable = exports.renderSmallerTable = exports.renderBiggerTable = exports.renderNegligibleTable = exports.renderRemovedTable = exports.renderAddedTable = exports.renderSummaryTable = exports.renderCollapsibleSection = exports.renderSection = exports.formatRatio = void 0;
+exports.renderReductionCelebration = exports.renderGithubCompareLink = exports.shortSha = exports.pluralize = exports.renderUnchangedTable = exports.renderSmallerTable = exports.renderBiggerTable = exports.renderNegligibleTable = exports.renderRemovedTable = exports.renderAddedTable = exports.renderSummaryTable = exports.renderCollapsibleSection = exports.renderSection = exports.formatRatio = void 0;
 const markdown_table_1 = __importDefault(__webpack_require__(366));
 const sortedColumn = (name) => `${name} ▾`;
 const deltaDescending = (a, b) => Math.abs(b.delta) - Math.abs(a.delta);
@@ -7011,8 +7013,12 @@ function pluralize(count, singular, plural) {
     }
 }
 exports.pluralize = pluralize;
+function shortSha(sha) {
+    return sha.slice(0, 9);
+}
+exports.shortSha = shortSha;
 function renderGithubCompareLink(baseSha, headSha) {
-    return `[${baseSha.slice(0, 9)}…${headSha.slice(0, 9)}](https://github.com/launchdarkly/gonfalon/compare/${baseSha}...${headSha} "Compare the head branch sha to the base branch sha for this run")`;
+    return `[${shortSha(baseSha)}…${shortSha(headSha)}](https://github.com/launchdarkly/gonfalon/compare/${baseSha}...${headSha} "Compare the head branch sha to the base branch sha for this run")`;
 }
 exports.renderGithubCompareLink = renderGithubCompareLink;
 function renderReductionCelebration({ diff }) {

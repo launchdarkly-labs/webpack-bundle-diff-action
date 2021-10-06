@@ -17,6 +17,7 @@ import {
   pluralize,
   formatRatio,
   renderGithubCompareLink,
+  shortSha,
 } from './render';
 
 const frontendExtensions = ['js', 'css', 'ts', 'tsx', 'json'];
@@ -102,7 +103,11 @@ async function run() {
 
     let commitMessage;
     if (commit.status === 200) {
-      commitMessage = commit.data.message;
+      commitMessage = `${commit.data.message} ([${shortSha(
+        commit.data.sha,
+      )}](https://github.com/launchdarkly/gonfalon/pull/${pullRequestId}/commits/${
+        commit.data.sha
+      }))`;
     }
 
     const paths = {
@@ -136,6 +141,8 @@ async function run() {
     let body: string;
     if (numberOfChanges === 0) {
       body = [
+        commitMessage,
+
         `No significant bundle changes for ${renderGithubCompareLink(
           baseSha,
           headSha,
@@ -160,6 +167,8 @@ async function run() {
       ].join('\n');
     } else {
       body = [
+        commitMessage,
+
         `### Comparing bundles sizes for ${renderGithubCompareLink(
           baseSha,
           headSha,

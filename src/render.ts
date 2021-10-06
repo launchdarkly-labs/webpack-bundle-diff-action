@@ -264,10 +264,13 @@ export function pluralize(count: number, singular: string, plural: string) {
   }
 }
 
+export function shortSha(sha: string) {
+  return sha.slice(0, 9);
+}
+
 export function renderGithubCompareLink(baseSha: string, headSha: string) {
-  return `[${baseSha.slice(0, 9)}…${headSha.slice(
-    0,
-    9,
+  return `[${shortSha(baseSha)}…${shortSha(
+    headSha,
   )}](https://github.com/launchdarkly/gonfalon/compare/${baseSha}...${headSha} "Compare the head branch sha to the base branch sha for this run")`;
 }
 
