@@ -4464,6 +4464,15 @@ async function run() {
             core.info(`No frontend changes detected for ${repo}#${pullRequestId} at ${baseSha}…${headSha}. Nothing to do.`);
             return;
         }
+        const commit = await octokit.rest.git.getCommit({
+            commit_sha: headSha,
+            owner,
+            repo,
+        });
+        let commitMessage;
+        if (commit.status === 200) {
+            commitMessage = commit.data.message;
+        }
         const paths = {
             base: {
                 report: path.resolve(process.cwd(), inputs.base.report),
