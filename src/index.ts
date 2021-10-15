@@ -323,7 +323,7 @@ async function run() {
       `Reported on webpack bundle diff for PR ${repo}#${pullRequestId} at ${baseSha}…${headSha} successfully`,
     );
   } catch (error) {
-    core.setFailed(error);
+    core.setFailed(error as Error);
   }
 }
 
