@@ -4417,7 +4417,7 @@ async function run() {
     var _a, _b, _c;
     try {
         if (github.context.eventName !== 'pull_request') {
-            core.setFailed(`This action only supports pull requests. ${github.context.eventName} events are not supported.`);
+            throw new Error(`This action only supports pull requests. ${github.context.eventName} events are not supported.`);
         }
         const inputs = {
             diffThreshold: parseFloat(core.getInput('diff-threshold')),
@@ -4448,7 +4448,7 @@ async function run() {
             repo,
         });
         if (commitComparison.status !== 200) {
-            core.setFailed(`The GitHub API for comparing the base and head commits for this ${github.context.eventName} event returned ${commitComparison.status}, expected 200.`);
+            throw new Error(`The GitHub API for comparing the base and head commits for this ${github.context.eventName} event returned ${commitComparison.status}, expected 200.`);
         }
         const files = (_c = commitComparison.data.files) !== null && _c !== void 0 ? _c : [];
         let hasFrontendChanges = false;
@@ -4477,6 +4477,15 @@ async function run() {
                 pullRequestId,
             });
         }
+        const artifacts = await octokit.rest.actions.listWorkflowRunArtifacts({
+            owner,
+            repo,
+            run_id: runId,
+        });
+        if (artifacts.status !== 200) {
+            throw new Error(`Failed to retrieve artifacts for run ${runId}.`);
+        }
+        console.log(JSON.stringify(artifacts.data, null, 2));
         const paths = {
             base: {
                 report: path.resolve(process.cwd(), inputs.base.report),

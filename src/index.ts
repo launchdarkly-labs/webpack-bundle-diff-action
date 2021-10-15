@@ -33,7 +33,7 @@ async function assertFileExists(path: string) {
 async function run() {
   try {
     if (github.context.eventName !== 'pull_request') {
-      core.setFailed(
+      throw new Error(
         `This action only supports pull requests. ${github.context.eventName} events are not supported.`,
       );
     }
@@ -71,7 +71,7 @@ async function run() {
     });
 
     if (commitComparison.status !== 200) {
-      core.setFailed(
+      throw new Error(
         `The GitHub API for comparing the base and head commits for this ${github.context.eventName} event returned ${commitComparison.status}, expected 200.`,
       );
     }
@@ -109,6 +109,17 @@ async function run() {
         pullRequestId,
       });
     }
+
+    const artifacts = await octokit.rest.actions.listWorkflowRunArtifacts({
+      owner,
+      repo,
+      run_id: runId,
+    });
+    if (artifacts.status !== 200) {
+      throw new Error(`Failed to retrieve artifacts for run ${runId}.`);
+    }
+
+    console.log(JSON.stringify(artifacts.data, null, 2));
 
     const paths = {
       base: {
