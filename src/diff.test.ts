@@ -1,5 +1,6 @@
 import { getDiff } from './diff';
 import {
+  renderCachingTable,
   renderSection,
   renderAddedTable,
   renderBiggerTable,
@@ -27,13 +28,13 @@ const diff = getDiff(
 test('section', () => {
   expect(
     renderSection({
-      title: `⚠️ ${diff.bigger.length} ${pluralize(
-        diff.bigger.length,
+      title: `⚠️ ${diff.changes.bigger.length} ${pluralize(
+        diff.changes.bigger.length,
         'bundle',
         'bundles',
       )} got bigger`,
-      isEmpty: diff.bigger.length === 0,
-      children: renderBiggerTable({ assets: diff.bigger }),
+      isEmpty: diff.changes.bigger.length === 0,
+      children: renderBiggerTable({ assets: diff.changes.bigger }),
     }),
   ).toMatchSnapshot();
 });
@@ -41,8 +42,8 @@ test('section', () => {
 test('empty section', () => {
   expect(
     renderSection({
-      title: `⚠️ ${diff.bigger.length} ${pluralize(
-        diff.bigger.length,
+      title: `⚠️ ${diff.changes.bigger.length} ${pluralize(
+        diff.changes.bigger.length,
         'bundle',
         'bundles',
       )} got bigger`,
@@ -53,23 +54,29 @@ test('empty section', () => {
 });
 
 test('added diff', () => {
-  expect(renderAddedTable({ assets: diff.added })).toMatchSnapshot();
+  expect(renderAddedTable({ assets: diff.changes.added })).toMatchSnapshot();
 });
 
 test('removed diff', () => {
-  expect(renderRemovedTable({ assets: diff.removed })).toMatchSnapshot();
+  expect(
+    renderRemovedTable({ assets: diff.changes.removed }),
+  ).toMatchSnapshot();
 });
 
 test('bigger diff', () => {
-  expect(renderBiggerTable({ assets: diff.bigger })).toMatchSnapshot();
+  expect(renderBiggerTable({ assets: diff.changes.bigger })).toMatchSnapshot();
 });
 
 test('smaller diff', () => {
-  expect(renderSmallerTable({ assets: diff.smaller })).toMatchSnapshot();
+  expect(
+    renderSmallerTable({ assets: diff.changes.smaller }),
+  ).toMatchSnapshot();
 });
 
 test('unchanged diff', () => {
-  expect(renderUnchangedTable({ assets: diff.unchanged })).toMatchSnapshot();
+  expect(
+    renderUnchangedTable({ assets: diff.changes.unchanged }),
+  ).toMatchSnapshot();
 });
 
 test('summary', () => {
@@ -83,7 +90,13 @@ test('reduction celebration', () => {
 test('negligible diff', () => {
   expect(
     renderNegligibleTable({
-      assets: diff.unchanged.filter((asset) => Math.abs(asset.ratio) > 0.0001),
+      assets: diff.changes.unchanged.filter(
+        (asset) => Math.abs(asset.ratio) > 0.0001,
+      ),
     }),
   ).toMatchSnapshot();
+});
+
+test('long-term caching diff', () => {
+  expect(renderCachingTable());
 });

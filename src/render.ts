@@ -93,22 +93,22 @@ ${!isEmpty ? children : 'No other changes.'}
 }
 
 export function renderSummaryTable({ diff }: { diff: Diff }) {
-  const bigger = Object.values(diff.bigger).reduce(
+  const bigger = Object.values(diff.changes.bigger).reduce(
     (total, asset) => total + asset.delta,
     0,
   );
 
-  const smaller = Object.values(diff.smaller).reduce(
+  const smaller = Object.values(diff.changes.smaller).reduce(
     (total, asset) => total + asset.delta,
     0,
   );
 
-  const added = Object.values(diff.added).reduce(
+  const added = Object.values(diff.changes.added).reduce(
     (total, asset) => total + asset.delta,
     0,
   );
 
-  const removed = Object.values(diff.removed).reduce(
+  const removed = Object.values(diff.changes.removed).reduce(
     (total, asset) => total + asset.delta,
     0,
   );
@@ -161,6 +161,10 @@ export function renderRemovedTable({ assets }: { assets: AssetDiff[] }) {
     ],
     { align: ['l', 'r'] },
   );
+}
+
+export function renderCachingTable() {
+  return markdownTable([]);
 }
 
 export function renderNegligibleTable({ assets }: { assets: AssetDiff[] }) {
@@ -292,10 +296,10 @@ export function renderCommitSummary({
 
 export function renderReductionCelebration({ diff }: { diff: Diff }) {
   if (
-    diff.added.length === 0 &&
-    diff.bigger.length === 0 &&
-    diff.removed.length > 0 &&
-    diff.smaller.length > 0
+    diff.changes.added.length === 0 &&
+    diff.changes.bigger.length === 0 &&
+    diff.changes.removed.length > 0 &&
+    diff.changes.smaller.length > 0
   ) {
     return `
 Amazing! You reduced the amount of code we ship to our customers, which is great way to help improve performance. Every step counts.

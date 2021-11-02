@@ -144,7 +144,7 @@ async function run() {
 
     const diff = getDiff(analysis, { diffThreshold: inputs.diffThreshold });
 
-    const numberOfChanges = Object.entries(diff)
+    const numberOfChanges = Object.entries(diff.changes)
       .filter(([kind]) => kind !== 'unchanged')
       .map(([_, assets]) => assets.length)
       .reduce((total, size) => total + size, 0);
@@ -161,16 +161,17 @@ async function run() {
 
         renderCollapsibleSection({
           title: `${
-            diff.unchanged.filter((asset) => Math.abs(asset.ratio) > 0.0001)
-              .length
+            diff.changes.unchanged.filter(
+              (asset) => Math.abs(asset.ratio) > 0.0001,
+            ).length
           } ${pluralize(
-            diff.unchanged.length,
+            diff.changes.unchanged.length,
             'bundle',
             'bundles',
           )} changed by less than ${formatRatio(inputs.diffThreshold)} 🧐`,
-          isEmpty: diff.unchanged.length === 0,
+          isEmpty: diff.changes.unchanged.length === 0,
           children: renderNegligibleTable({
-            assets: diff.unchanged.filter(
+            assets: diff.changes.unchanged.filter(
               (asset) => Math.abs(asset.ratio) > 0.0001,
             ),
           }),
@@ -197,57 +198,58 @@ async function run() {
         }),
 
         renderSection({
-          title: `⚠️ ${diff.bigger.length} ${pluralize(
-            diff.bigger.length,
+          title: `⚠️ ${diff.changes.bigger.length} ${pluralize(
+            diff.changes.bigger.length,
             'bundle',
             'bundles',
           )} got bigger`,
-          isEmpty: diff.bigger.length === 0,
-          children: renderBiggerTable({ assets: diff.bigger }),
+          isEmpty: diff.changes.bigger.length === 0,
+          children: renderBiggerTable({ assets: diff.changes.bigger }),
         }),
 
         renderSection({
-          title: `🎉 ${diff.smaller.length} ${pluralize(
-            diff.smaller.length,
+          title: `🎉 ${diff.changes.smaller.length} ${pluralize(
+            diff.changes.smaller.length,
             'bundle',
             'bundles',
           )} got smaller`,
-          isEmpty: diff.smaller.length === 0,
-          children: renderSmallerTable({ assets: diff.smaller }),
+          isEmpty: diff.changes.smaller.length === 0,
+          children: renderSmallerTable({ assets: diff.changes.smaller }),
         }),
 
         renderSection({
-          title: `🤔 ${diff.added.length} ${pluralize(
-            diff.added.length,
+          title: `🤔 ${diff.changes.added.length} ${pluralize(
+            diff.changes.added.length,
             'bundle was',
             'bundles were',
           )} added`,
-          isEmpty: diff.added.length === 0,
-          children: renderAddedTable({ assets: diff.added }),
+          isEmpty: diff.changes.added.length === 0,
+          children: renderAddedTable({ assets: diff.changes.added }),
         }),
 
         renderSection({
-          title: `👏 ${diff.removed.length} ${pluralize(
-            diff.removed.length,
+          title: `👏 ${diff.changes.removed.length} ${pluralize(
+            diff.changes.removed.length,
             'bundle was',
             'bundles were',
           )} removed`,
-          isEmpty: diff.removed.length === 0,
-          children: renderRemovedTable({ assets: diff.removed }),
+          isEmpty: diff.changes.removed.length === 0,
+          children: renderRemovedTable({ assets: diff.changes.removed }),
         }),
 
         renderCollapsibleSection({
           title: `${
-            diff.unchanged.filter((asset) => Math.abs(asset.ratio) > 0.0001)
-              .length
+            diff.changes.unchanged.filter(
+              (asset) => Math.abs(asset.ratio) > 0.0001,
+            ).length
           } ${pluralize(
-            diff.unchanged.length,
+            diff.changes.unchanged.length,
             'bundle',
             'bundles',
           )} changed by less than ${formatRatio(inputs.diffThreshold)} 🧐`,
-          isEmpty: diff.unchanged.length === 0,
+          isEmpty: diff.changes.unchanged.length === 0,
           children: renderNegligibleTable({
-            assets: diff.unchanged.filter(
+            assets: diff.changes.unchanged.filter(
               (asset) => Math.abs(asset.ratio) > 0.0001,
             ),
           }),
@@ -271,7 +273,7 @@ async function run() {
     // If there was an increase in bundle size, add a label to the pull request
     // It's possible there was a net decrease, and that some critical bundles
     // increased.
-    if (diff.added.length > 0 || diff.bigger.length > 0) {
+    if (diff.changes.added.length > 0 || diff.changes.bigger.length > 0) {
       await octokit.rest.issues.addLabels({
         owner,
         repo,
@@ -304,7 +306,7 @@ async function run() {
     // If there was a decrease in bundle size, add a label to the pull request
     // It's possible there was a net increase, and that some critical bundles
     // decreased.
-    if (diff.removed.length > 0 || diff.smaller.length > 0) {
+    if (diff.changes.removed.length > 0 || diff.changes.smaller.length > 0) {
       await octokit.rest.issues.addLabels({
         owner,
         repo,

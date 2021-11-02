@@ -19,11 +19,14 @@ export type AssetDiff = {
 };
 
 export type Diff = {
-  added: AssetDiff[];
-  removed: AssetDiff[];
-  bigger: AssetDiff[];
-  smaller: AssetDiff[];
-  unchanged: AssetDiff[];
+  caching: {};
+  changes: {
+    added: AssetDiff[];
+    removed: AssetDiff[];
+    bigger: AssetDiff[];
+    smaller: AssetDiff[];
+    unchanged: AssetDiff[];
+  };
 };
 
 const ASSET_NAME_REGEXP = /^(?<assetname>[a-zA-Z0-9\.\-_]+)\.([a-zA-Z0-9]{20})\.(?<extension>js|css)$/;
@@ -98,15 +101,15 @@ export function getDiff(
     ),
   };
 
-  let diff: Record<
-    'added' | 'removed' | 'bigger' | 'smaller' | 'unchanged',
-    AssetDiff[]
-  > = {
-    added: [],
-    removed: [],
-    bigger: [],
-    smaller: [],
-    unchanged: [],
+  let diff: Diff = {
+    caching: {},
+    changes: {
+      added: [],
+      removed: [],
+      bigger: [],
+      smaller: [],
+      unchanged: [],
+    },
   };
 
   for (let name of Object.keys(byName.base)) {
@@ -118,7 +121,7 @@ export function getDiff(
     // Removed
     if (!headAsset) {
       const headSize = 0;
-      diff.removed.push({
+      diff.changes.removed.push({
         name,
         baseSize: baseAsset.parsedSize,
         headSize,
@@ -138,11 +141,11 @@ export function getDiff(
       };
 
       if (ratio > diffThreshold) {
-        diff.bigger.push(d);
+        diff.changes.bigger.push(d);
       } else if (ratio < -1 * diffThreshold) {
-        diff.smaller.push(d);
+        diff.changes.smaller.push(d);
       } else {
-        diff.unchanged.push(d);
+        diff.changes.unchanged.push(d);
       }
     }
   }
@@ -155,7 +158,7 @@ export function getDiff(
 
     // Added
     if (!baseAsset) {
-      diff.added.push({
+      diff.changes.added.push({
         name,
         baseSize: 0,
         headSize,

@@ -4135,11 +4135,14 @@ function getDiff(analysis, { diffThreshold }) {
             .filter((entry) => entry.length !== 0)),
     };
     let diff = {
-        added: [],
-        removed: [],
-        bigger: [],
-        smaller: [],
-        unchanged: [],
+        caching: {},
+        changes: {
+            added: [],
+            removed: [],
+            bigger: [],
+            smaller: [],
+            unchanged: [],
+        },
     };
     for (let name of Object.keys(byName.base)) {
         const baseAsset = byName.base[name];
@@ -4148,7 +4151,7 @@ function getDiff(analysis, { diffThreshold }) {
         // Removed
         if (!headAsset) {
             const headSize = 0;
-            diff.removed.push({
+            diff.changes.removed.push({
                 name,
                 baseSize: baseAsset.parsedSize,
                 headSize,
@@ -4168,13 +4171,13 @@ function getDiff(analysis, { diffThreshold }) {
                 delta,
             };
             if (ratio > diffThreshold) {
-                diff.bigger.push(d);
+                diff.changes.bigger.push(d);
             }
             else if (ratio < -1 * diffThreshold) {
-                diff.smaller.push(d);
+                diff.changes.smaller.push(d);
             }
             else {
-                diff.unchanged.push(d);
+                diff.changes.unchanged.push(d);
             }
         }
     }
@@ -4184,7 +4187,7 @@ function getDiff(analysis, { diffThreshold }) {
         const baseAsset = byName.base[name];
         // Added
         if (!baseAsset) {
-            diff.added.push({
+            diff.changes.added.push({
                 name,
                 baseSize: 0,
                 headSize,
@@ -4505,7 +4508,7 @@ async function run() {
             },
         };
         const diff = diff_1.getDiff(analysis, { diffThreshold: inputs.diffThreshold });
-        const numberOfChanges = Object.entries(diff)
+        const numberOfChanges = Object.entries(diff.changes)
             .filter(([kind]) => kind !== 'unchanged')
             .map(([_, assets]) => assets.length)
             .reduce((total, size) => total + size, 0);
@@ -4515,11 +4518,10 @@ async function run() {
                 commitMessage,
                 `No significant bundle changes for ${render_1.renderGithubCompareLink(baseSha, headSha)}.`,
                 render_1.renderCollapsibleSection({
-                    title: `${diff.unchanged.filter((asset) => Math.abs(asset.ratio) > 0.0001)
-                        .length} ${render_1.pluralize(diff.unchanged.length, 'bundle', 'bundles')} changed by less than ${render_1.formatRatio(inputs.diffThreshold)} 🧐`,
-                    isEmpty: diff.unchanged.length === 0,
+                    title: `${diff.changes.unchanged.filter((asset) => Math.abs(asset.ratio) > 0.0001).length} ${render_1.pluralize(diff.changes.unchanged.length, 'bundle', 'bundles')} changed by less than ${render_1.formatRatio(inputs.diffThreshold)} 🧐`,
+                    isEmpty: diff.changes.unchanged.length === 0,
                     children: render_1.renderNegligibleTable({
-                        assets: diff.unchanged.filter((asset) => Math.abs(asset.ratio) > 0.0001),
+                        assets: diff.changes.unchanged.filter((asset) => Math.abs(asset.ratio) > 0.0001),
                     }),
                 }),
                 '---',
@@ -4536,31 +4538,30 @@ async function run() {
                     children: render_1.renderSummaryTable({ diff }),
                 }),
                 render_1.renderSection({
-                    title: `⚠️ ${diff.bigger.length} ${render_1.pluralize(diff.bigger.length, 'bundle', 'bundles')} got bigger`,
-                    isEmpty: diff.bigger.length === 0,
-                    children: render_1.renderBiggerTable({ assets: diff.bigger }),
+                    title: `⚠️ ${diff.changes.bigger.length} ${render_1.pluralize(diff.changes.bigger.length, 'bundle', 'bundles')} got bigger`,
+                    isEmpty: diff.changes.bigger.length === 0,
+                    children: render_1.renderBiggerTable({ assets: diff.changes.bigger }),
                 }),
                 render_1.renderSection({
-                    title: `🎉 ${diff.smaller.length} ${render_1.pluralize(diff.smaller.length, 'bundle', 'bundles')} got smaller`,
-                    isEmpty: diff.smaller.length === 0,
-                    children: render_1.renderSmallerTable({ assets: diff.smaller }),
+                    title: `🎉 ${diff.changes.smaller.length} ${render_1.pluralize(diff.changes.smaller.length, 'bundle', 'bundles')} got smaller`,
+                    isEmpty: diff.changes.smaller.length === 0,
+                    children: render_1.renderSmallerTable({ assets: diff.changes.smaller }),
                 }),
                 render_1.renderSection({
-                    title: `🤔 ${diff.added.length} ${render_1.pluralize(diff.added.length, 'bundle was', 'bundles were')} added`,
-                    isEmpty: diff.added.length === 0,
-                    children: render_1.renderAddedTable({ assets: diff.added }),
+                    title: `🤔 ${diff.changes.added.length} ${render_1.pluralize(diff.changes.added.length, 'bundle was', 'bundles were')} added`,
+                    isEmpty: diff.changes.added.length === 0,
+                    children: render_1.renderAddedTable({ assets: diff.changes.added }),
                 }),
                 render_1.renderSection({
-                    title: `👏 ${diff.removed.length} ${render_1.pluralize(diff.removed.length, 'bundle was', 'bundles were')} removed`,
-                    isEmpty: diff.removed.length === 0,
-                    children: render_1.renderRemovedTable({ assets: diff.removed }),
+                    title: `👏 ${diff.changes.removed.length} ${render_1.pluralize(diff.changes.removed.length, 'bundle was', 'bundles were')} removed`,
+                    isEmpty: diff.changes.removed.length === 0,
+                    children: render_1.renderRemovedTable({ assets: diff.changes.removed }),
                 }),
                 render_1.renderCollapsibleSection({
-                    title: `${diff.unchanged.filter((asset) => Math.abs(asset.ratio) > 0.0001)
-                        .length} ${render_1.pluralize(diff.unchanged.length, 'bundle', 'bundles')} changed by less than ${render_1.formatRatio(inputs.diffThreshold)} 🧐`,
-                    isEmpty: diff.unchanged.length === 0,
+                    title: `${diff.changes.unchanged.filter((asset) => Math.abs(asset.ratio) > 0.0001).length} ${render_1.pluralize(diff.changes.unchanged.length, 'bundle', 'bundles')} changed by less than ${render_1.formatRatio(inputs.diffThreshold)} 🧐`,
+                    isEmpty: diff.changes.unchanged.length === 0,
                     children: render_1.renderNegligibleTable({
-                        assets: diff.unchanged.filter((asset) => Math.abs(asset.ratio) > 0.0001),
+                        assets: diff.changes.unchanged.filter((asset) => Math.abs(asset.ratio) > 0.0001),
                     }),
                 }),
                 render_1.renderReductionCelebration({ diff }),
@@ -4577,7 +4578,7 @@ async function run() {
         // If there was an increase in bundle size, add a label to the pull request
         // It's possible there was a net decrease, and that some critical bundles
         // increased.
-        if (diff.added.length > 0 || diff.bigger.length > 0) {
+        if (diff.changes.added.length > 0 || diff.changes.bigger.length > 0) {
             await octokit.rest.issues.addLabels({
                 owner,
                 repo,
@@ -4608,7 +4609,7 @@ async function run() {
         // If there was a decrease in bundle size, add a label to the pull request
         // It's possible there was a net increase, and that some critical bundles
         // decreased.
-        if (diff.removed.length > 0 || diff.smaller.length > 0) {
+        if (diff.changes.removed.length > 0 || diff.changes.smaller.length > 0) {
             await octokit.rest.issues.addLabels({
                 owner,
                 repo,
@@ -6856,7 +6857,7 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.renderReductionCelebration = exports.renderCommitSummary = exports.renderGithubCompareLink = exports.shortSha = exports.pluralize = exports.renderUnchangedTable = exports.renderSmallerTable = exports.renderBiggerTable = exports.renderNegligibleTable = exports.renderRemovedTable = exports.renderAddedTable = exports.renderSummaryTable = exports.renderCollapsibleSection = exports.renderSection = exports.formatRatio = void 0;
+exports.renderReductionCelebration = exports.renderCommitSummary = exports.renderGithubCompareLink = exports.shortSha = exports.pluralize = exports.renderUnchangedTable = exports.renderSmallerTable = exports.renderBiggerTable = exports.renderNegligibleTable = exports.renderCachingTable = exports.renderRemovedTable = exports.renderAddedTable = exports.renderSummaryTable = exports.renderCollapsibleSection = exports.renderSection = exports.formatRatio = void 0;
 const markdown_table_1 = __importDefault(__webpack_require__(366));
 const sortedColumn = (name) => `${name} ▾`;
 const deltaDescending = (a, b) => Math.abs(b.delta) - Math.abs(a.delta);
@@ -6905,10 +6906,10 @@ ${!isEmpty ? children : 'No other changes.'}
 }
 exports.renderCollapsibleSection = renderCollapsibleSection;
 function renderSummaryTable({ diff }) {
-    const bigger = Object.values(diff.bigger).reduce((total, asset) => total + asset.delta, 0);
-    const smaller = Object.values(diff.smaller).reduce((total, asset) => total + asset.delta, 0);
-    const added = Object.values(diff.added).reduce((total, asset) => total + asset.delta, 0);
-    const removed = Object.values(diff.removed).reduce((total, asset) => total + asset.delta, 0);
+    const bigger = Object.values(diff.changes.bigger).reduce((total, asset) => total + asset.delta, 0);
+    const smaller = Object.values(diff.changes.smaller).reduce((total, asset) => total + asset.delta, 0);
+    const added = Object.values(diff.changes.added).reduce((total, asset) => total + asset.delta, 0);
+    const removed = Object.values(diff.changes.removed).reduce((total, asset) => total + asset.delta, 0);
     const total = bigger + smaller + added + removed;
     return markdown_table_1.default([
         ['', 'Delta'],
@@ -6949,6 +6950,10 @@ function renderRemovedTable({ assets }) {
     ], { align: ['l', 'r'] });
 }
 exports.renderRemovedTable = renderRemovedTable;
+function renderCachingTable() {
+    return markdown_table_1.default([]);
+}
+exports.renderCachingTable = renderCachingTable;
 function renderNegligibleTable({ assets }) {
     return markdown_table_1.default([
         ['Asset', 'Base size', 'Head size', sortedColumn('Delta'), 'Delta %'],
@@ -7043,10 +7048,10 @@ function renderCommitSummary({ sha, message, pullRequestId, }) {
 }
 exports.renderCommitSummary = renderCommitSummary;
 function renderReductionCelebration({ diff }) {
-    if (diff.added.length === 0 &&
-        diff.bigger.length === 0 &&
-        diff.removed.length > 0 &&
-        diff.smaller.length > 0) {
+    if (diff.changes.added.length === 0 &&
+        diff.changes.bigger.length === 0 &&
+        diff.changes.removed.length > 0 &&
+        diff.changes.smaller.length > 0) {
         return `
 Amazing! You reduced the amount of code we ship to our customers, which is great way to help improve performance. Every step counts.
 
