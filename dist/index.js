@@ -7024,6 +7024,7 @@ function renderLongTermCachingSummary({ diff }) {
                 md.code(exports.formatRatio(1)),
             ],
         ], { align: ['l', 'r', 'r'] }),
+        '\n',
         'ℹ️ Lower is better',
     ].join('\n');
 }
