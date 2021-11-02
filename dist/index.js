@@ -7025,7 +7025,7 @@ function renderLongTermCachingSummary({ diff }) {
             ],
         ], { align: ['l', 'r', 'r'] }),
         '\n',
-        'ℹ️ Lower is better',
+        'ℹ️ Lower is better.',
     ].join('\n');
 }
 exports.renderLongTermCachingSummary = renderLongTermCachingSummary;

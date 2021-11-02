@@ -239,7 +239,7 @@ export function renderLongTermCachingSummary({ diff }: { diff: Diff }) {
       { align: ['l', 'r', 'r'] },
     ),
     '\n',
-    'ℹ️ Lower is better',
+    'ℹ️ Lower is better.',
   ].join('\n');
 }
 
