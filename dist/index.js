@@ -4083,7 +4083,7 @@ exports.getState = getState;
 // Mostly based off of https://github.com/ZachGawlik/webpack-stats-diff/tree/master/src with better
 // support for contenthash, typescript, etc…
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.getDiff = void 0;
+exports.affectsLongTermCaching = exports.getDiff = void 0;
 const ASSET_NAME_REGEXP = /^(?<assetname>[a-zA-Z0-9\.\-_]+)\.([a-zA-Z0-9]{20})\.(?<extension>js|css)$/;
 const parseAssetName = (name) => {
     const match = name.match(ASSET_NAME_REGEXP);
@@ -4135,13 +4135,16 @@ function getDiff(analysis, { diffThreshold }) {
             .filter((entry) => entry.length !== 0)),
     };
     let diff = {
-        caching: {},
-        changes: {
+        totalBytes: {
+            base: 0,
+            head: 0,
+        },
+        chunks: {
             added: [],
             removed: [],
             bigger: [],
             smaller: [],
-            unchanged: [],
+            negligible: [],
         },
     };
     for (let name of Object.keys(byName.base)) {
@@ -4151,7 +4154,7 @@ function getDiff(analysis, { diffThreshold }) {
         // Removed
         if (!headAsset) {
             const headSize = 0;
-            diff.changes.removed.push({
+            diff.chunks.removed.push({
                 name,
                 baseSize: baseAsset.parsedSize,
                 headSize,
@@ -4170,14 +4173,19 @@ function getDiff(analysis, { diffThreshold }) {
                 ratio,
                 delta,
             };
+            diff.totalBytes.base += baseSize;
+            diff.totalBytes.head += headSize;
             if (ratio > diffThreshold) {
-                diff.changes.bigger.push(d);
+                // Bigger
+                diff.chunks.bigger.push(d);
             }
             else if (ratio < -1 * diffThreshold) {
-                diff.changes.smaller.push(d);
+                // Smaller
+                diff.chunks.smaller.push(d);
             }
             else {
-                diff.changes.unchanged.push(d);
+                // Negligible
+                diff.chunks.negligible.push(d);
             }
         }
     }
@@ -4187,7 +4195,7 @@ function getDiff(analysis, { diffThreshold }) {
         const baseAsset = byName.base[name];
         // Added
         if (!baseAsset) {
-            diff.changes.added.push({
+            diff.chunks.added.push({
                 name,
                 baseSize: 0,
                 headSize,
@@ -4199,6 +4207,13 @@ function getDiff(analysis, { diffThreshold }) {
     return diff;
 }
 exports.getDiff = getDiff;
+function affectsLongTermCaching(diff) {
+    return (diff.chunks.added.length > 0 ||
+        diff.chunks.bigger.length > 0 ||
+        diff.chunks.smaller.length > 0 ||
+        diff.chunks.negligible.length > 0);
+}
+exports.affectsLongTermCaching = affectsLongTermCaching;
 
 
 /***/ }),
@@ -4508,7 +4523,7 @@ async function run() {
             },
         };
         const diff = diff_1.getDiff(analysis, { diffThreshold: inputs.diffThreshold });
-        const numberOfChanges = Object.entries(diff.changes)
+        const numberOfChanges = Object.entries(diff.chunks)
             .filter(([kind]) => kind !== 'unchanged')
             .map(([_, assets]) => assets.length)
             .reduce((total, size) => total + size, 0);
@@ -4518,10 +4533,10 @@ async function run() {
                 commitMessage,
                 `No significant bundle changes for ${render_1.renderGithubCompareLink(baseSha, headSha)}.`,
                 render_1.renderCollapsibleSection({
-                    title: `${diff.changes.unchanged.filter((asset) => Math.abs(asset.ratio) > 0.0001).length} ${render_1.pluralize(diff.changes.unchanged.length, 'bundle', 'bundles')} changed by less than ${render_1.formatRatio(inputs.diffThreshold)} 🧐`,
-                    isEmpty: diff.changes.unchanged.length === 0,
+                    title: `${diff.chunks.negligible.filter((asset) => Math.abs(asset.ratio) > 0.0001).length} ${render_1.pluralize(diff.chunks.negligible.length, 'bundle', 'bundles')} changed by less than ${render_1.formatRatio(inputs.diffThreshold)} 🧐`,
+                    isEmpty: diff.chunks.negligible.length === 0,
                     children: render_1.renderNegligibleTable({
-                        assets: diff.changes.unchanged.filter((asset) => Math.abs(asset.ratio) > 0.0001),
+                        assets: diff.chunks.negligible.filter((asset) => Math.abs(asset.ratio) > 0.0001),
                     }),
                 }),
                 '---',
@@ -4538,31 +4553,37 @@ async function run() {
                     children: render_1.renderSummaryTable({ diff }),
                 }),
                 render_1.renderSection({
-                    title: `⚠️ ${diff.changes.bigger.length} ${render_1.pluralize(diff.changes.bigger.length, 'bundle', 'bundles')} got bigger`,
-                    isEmpty: diff.changes.bigger.length === 0,
-                    children: render_1.renderBiggerTable({ assets: diff.changes.bigger }),
+                    title: `⚠️ ${diff.chunks.bigger.length} ${render_1.pluralize(diff.chunks.bigger.length, 'bundle', 'bundles')} got bigger`,
+                    isEmpty: diff.chunks.bigger.length === 0,
+                    children: render_1.renderBiggerTable({ assets: diff.chunks.bigger }),
                 }),
                 render_1.renderSection({
-                    title: `🎉 ${diff.changes.smaller.length} ${render_1.pluralize(diff.changes.smaller.length, 'bundle', 'bundles')} got smaller`,
-                    isEmpty: diff.changes.smaller.length === 0,
-                    children: render_1.renderSmallerTable({ assets: diff.changes.smaller }),
+                    title: `🎉 ${diff.chunks.smaller.length} ${render_1.pluralize(diff.chunks.smaller.length, 'bundle', 'bundles')} got smaller`,
+                    isEmpty: diff.chunks.smaller.length === 0,
+                    children: render_1.renderSmallerTable({ assets: diff.chunks.smaller }),
                 }),
                 render_1.renderSection({
-                    title: `🤔 ${diff.changes.added.length} ${render_1.pluralize(diff.changes.added.length, 'bundle was', 'bundles were')} added`,
-                    isEmpty: diff.changes.added.length === 0,
-                    children: render_1.renderAddedTable({ assets: diff.changes.added }),
+                    title: `🤔 ${diff.chunks.added.length} ${render_1.pluralize(diff.chunks.added.length, 'bundle was', 'bundles were')} added`,
+                    isEmpty: diff.chunks.added.length === 0,
+                    children: render_1.renderAddedTable({ assets: diff.chunks.added }),
                 }),
                 render_1.renderSection({
-                    title: `👏 ${diff.changes.removed.length} ${render_1.pluralize(diff.changes.removed.length, 'bundle was', 'bundles were')} removed`,
-                    isEmpty: diff.changes.removed.length === 0,
-                    children: render_1.renderRemovedTable({ assets: diff.changes.removed }),
+                    title: `👏 ${diff.chunks.removed.length} ${render_1.pluralize(diff.chunks.removed.length, 'bundle was', 'bundles were')} removed`,
+                    isEmpty: diff.chunks.removed.length === 0,
+                    children: render_1.renderRemovedTable({ assets: diff.chunks.removed }),
                 }),
                 render_1.renderCollapsibleSection({
-                    title: `${diff.changes.unchanged.filter((asset) => Math.abs(asset.ratio) > 0.0001).length} ${render_1.pluralize(diff.changes.unchanged.length, 'bundle', 'bundles')} changed by less than ${render_1.formatRatio(inputs.diffThreshold)} 🧐`,
-                    isEmpty: diff.changes.unchanged.length === 0,
+                    title: `${diff.chunks.negligible.filter((asset) => Math.abs(asset.ratio) > 0.0001).length} ${render_1.pluralize(diff.chunks.negligible.length, 'bundle', 'bundles')} changed by less than ${render_1.formatRatio(inputs.diffThreshold)} 🧐`,
+                    isEmpty: diff.chunks.negligible.length === 0,
                     children: render_1.renderNegligibleTable({
-                        assets: diff.changes.unchanged.filter((asset) => Math.abs(asset.ratio) > 0.0001),
+                        assets: diff.chunks.negligible.filter((asset) => Math.abs(asset.ratio) > 0.0001),
                     }),
+                }),
+                render_1.renderCollapsibleSection({
+                    title: 'Long-term caching impact',
+                    isEmpty: !diff_1.affectsLongTermCaching(diff),
+                    ifEmpty: 'No impact.',
+                    children: render_1.renderLongTermCachingSummary({ diff }),
                 }),
                 render_1.renderReductionCelebration({ diff }),
                 '---',
@@ -4578,7 +4599,7 @@ async function run() {
         // If there was an increase in bundle size, add a label to the pull request
         // It's possible there was a net decrease, and that some critical bundles
         // increased.
-        if (diff.changes.added.length > 0 || diff.changes.bigger.length > 0) {
+        if (diff.chunks.added.length > 0 || diff.chunks.bigger.length > 0) {
             await octokit.rest.issues.addLabels({
                 owner,
                 repo,
@@ -4609,7 +4630,7 @@ async function run() {
         // If there was a decrease in bundle size, add a label to the pull request
         // It's possible there was a net increase, and that some critical bundles
         // decreased.
-        if (diff.changes.removed.length > 0 || diff.changes.smaller.length > 0) {
+        if (diff.chunks.removed.length > 0 || diff.chunks.smaller.length > 0) {
             await octokit.rest.issues.addLabels({
                 owner,
                 repo,
@@ -6857,7 +6878,7 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.renderReductionCelebration = exports.renderCommitSummary = exports.renderGithubCompareLink = exports.shortSha = exports.pluralize = exports.renderUnchangedTable = exports.renderSmallerTable = exports.renderBiggerTable = exports.renderNegligibleTable = exports.renderCachingTable = exports.renderRemovedTable = exports.renderAddedTable = exports.renderSummaryTable = exports.renderCollapsibleSection = exports.renderSection = exports.formatRatio = void 0;
+exports.renderReductionCelebration = exports.renderCommitSummary = exports.renderGithubCompareLink = exports.shortSha = exports.pluralize = exports.renderUnchangedTable = exports.renderSmallerTable = exports.renderBiggerTable = exports.renderNegligibleTable = exports.renderLongTermCachingSummary = exports.renderTotalDownloadedBytesTable = exports.renderRemovedTable = exports.renderAddedTable = exports.renderSummaryTable = exports.renderCollapsibleSection = exports.renderSection = exports.formatRatio = void 0;
 const markdown_table_1 = __importDefault(__webpack_require__(366));
 const sortedColumn = (name) => `${name} ▾`;
 const deltaDescending = (a, b) => Math.abs(b.delta) - Math.abs(a.delta);
@@ -6894,22 +6915,22 @@ ${!isEmpty ? children : 'No significant changes.'}
 `;
 }
 exports.renderSection = renderSection;
-function renderCollapsibleSection({ title, isEmpty = false, children, }) {
+function renderCollapsibleSection({ title, isEmpty = false, ifEmpty = 'No other changes.', children, }) {
     return `
 <details>
   <summary>${title}</summary>
 
-${!isEmpty ? children : 'No other changes.'}
+${!isEmpty ? children : ifEmpty}
 
 </details>
 `;
 }
 exports.renderCollapsibleSection = renderCollapsibleSection;
 function renderSummaryTable({ diff }) {
-    const bigger = Object.values(diff.changes.bigger).reduce((total, asset) => total + asset.delta, 0);
-    const smaller = Object.values(diff.changes.smaller).reduce((total, asset) => total + asset.delta, 0);
-    const added = Object.values(diff.changes.added).reduce((total, asset) => total + asset.delta, 0);
-    const removed = Object.values(diff.changes.removed).reduce((total, asset) => total + asset.delta, 0);
+    const bigger = Object.values(diff.chunks.bigger).reduce((total, asset) => total + asset.delta, 0);
+    const smaller = Object.values(diff.chunks.smaller).reduce((total, asset) => total + asset.delta, 0);
+    const added = Object.values(diff.chunks.added).reduce((total, asset) => total + asset.delta, 0);
+    const removed = Object.values(diff.chunks.removed).reduce((total, asset) => total + asset.delta, 0);
     const total = bigger + smaller + added + removed;
     return markdown_table_1.default([
         ['', 'Delta'],
@@ -6950,10 +6971,63 @@ function renderRemovedTable({ assets }) {
     ], { align: ['l', 'r'] });
 }
 exports.renderRemovedTable = renderRemovedTable;
-function renderCachingTable() {
-    return markdown_table_1.default([]);
+function renderTotalDownloadedBytesTable({ diff }) {
+    return markdown_table_1.default([
+        ['', 'Total downloaded'],
+        ['Base', formatBytes(diff.totalBytes.base)],
+        ['Head', formatBytes(diff.totalBytes.head)],
+        [
+            md.emphasis('Delta'),
+            md.code(formatBytes(diff.totalBytes.head - diff.totalBytes.base, {
+                signed: true,
+            })),
+        ],
+    ]);
 }
-exports.renderCachingTable = renderCachingTable;
+exports.renderTotalDownloadedBytesTable = renderTotalDownloadedBytesTable;
+function renderLongTermCachingSummary({ diff }) {
+    const invalidatedCount = diff.chunks.bigger.length +
+        diff.chunks.smaller.length +
+        diff.chunks.negligible.length;
+    const invalidatedBytes = diff.chunks.bigger
+        .map((asset) => asset.headSize)
+        .reduce((total, size) => total + size, 0) +
+        diff.chunks.smaller
+            .map((asset) => asset.headSize)
+            .reduce((total, size) => total + size, 0) +
+        diff.chunks.negligible
+            .map((asset) => asset.headSize)
+            .reduce((total, size) => total + size, 0);
+    const addedCount = diff.chunks.added.length;
+    const addedBytes = diff.chunks.added
+        .map((asset) => asset.headSize)
+        .reduce((total, size) => total + size, 0);
+    const totalBytes = invalidatedBytes + addedBytes;
+    return [
+        `${invalidatedCount} ${pluralize(invalidatedCount, 'chunk', 'chunks')} will be invalidated from [long-term caching](https://webpack.js.org/guides/caching/), and ${addedCount} ${pluralize(addedCount, 'chunk', 'chunks')} will be added.`,
+        "Here's a breakdown of the number of bytes our customers will need to download once this pull request is deployed:",
+        markdown_table_1.default([
+            ['', 'Bytes', '% of total JavaScript code'],
+            [
+                'Invalidated',
+                md.code(formatBytes(invalidatedBytes)),
+                md.code(exports.formatRatio(invalidatedBytes / totalBytes)),
+            ],
+            [
+                'Added',
+                md.code(formatBytes(addedBytes)),
+                md.code(exports.formatRatio(addedBytes / totalBytes)),
+            ],
+            [
+                md.emphasis('Total'),
+                md.code(formatBytes(totalBytes)),
+                md.code(exports.formatRatio(1)),
+            ],
+        ], { align: ['l', 'r', 'r'] }),
+        'ℹ️ Lower is better',
+    ].join('\n');
+}
+exports.renderLongTermCachingSummary = renderLongTermCachingSummary;
 function renderNegligibleTable({ assets }) {
     return markdown_table_1.default([
         ['Asset', 'Base size', 'Head size', sortedColumn('Delta'), 'Delta %'],
@@ -7048,10 +7122,10 @@ function renderCommitSummary({ sha, message, pullRequestId, }) {
 }
 exports.renderCommitSummary = renderCommitSummary;
 function renderReductionCelebration({ diff }) {
-    if (diff.changes.added.length === 0 &&
-        diff.changes.bigger.length === 0 &&
-        diff.changes.removed.length > 0 &&
-        diff.changes.smaller.length > 0) {
+    if (diff.chunks.added.length === 0 &&
+        diff.chunks.bigger.length === 0 &&
+        diff.chunks.removed.length > 0 &&
+        diff.chunks.smaller.length > 0) {
         return `
 Amazing! You reduced the amount of code we ship to our customers, which is great way to help improve performance. Every step counts.
 

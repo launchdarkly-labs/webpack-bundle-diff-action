@@ -3,7 +3,7 @@ import * as github from '@actions/github';
 import { access, constants } from 'fs';
 import * as path from 'path';
 
-import { getDiff } from './diff';
+import { affectsLongTermCaching, getDiff } from './diff';
 import {
   renderSection,
   renderCollapsibleSection,
@@ -18,6 +18,7 @@ import {
   formatRatio,
   renderGithubCompareLink,
   renderCommitSummary,
+  renderLongTermCachingSummary,
 } from './render';
 
 const frontendExtensions = ['js', 'css', 'ts', 'tsx', 'json'];
@@ -144,7 +145,7 @@ async function run() {
 
     const diff = getDiff(analysis, { diffThreshold: inputs.diffThreshold });
 
-    const numberOfChanges = Object.entries(diff.changes)
+    const numberOfChanges = Object.entries(diff.chunks)
       .filter(([kind]) => kind !== 'unchanged')
       .map(([_, assets]) => assets.length)
       .reduce((total, size) => total + size, 0);
@@ -161,17 +162,17 @@ async function run() {
 
         renderCollapsibleSection({
           title: `${
-            diff.changes.unchanged.filter(
+            diff.chunks.negligible.filter(
               (asset) => Math.abs(asset.ratio) > 0.0001,
             ).length
           } ${pluralize(
-            diff.changes.unchanged.length,
+            diff.chunks.negligible.length,
             'bundle',
             'bundles',
           )} changed by less than ${formatRatio(inputs.diffThreshold)} 🧐`,
-          isEmpty: diff.changes.unchanged.length === 0,
+          isEmpty: diff.chunks.negligible.length === 0,
           children: renderNegligibleTable({
-            assets: diff.changes.unchanged.filter(
+            assets: diff.chunks.negligible.filter(
               (asset) => Math.abs(asset.ratio) > 0.0001,
             ),
           }),
@@ -198,61 +199,68 @@ async function run() {
         }),
 
         renderSection({
-          title: `⚠️ ${diff.changes.bigger.length} ${pluralize(
-            diff.changes.bigger.length,
+          title: `⚠️ ${diff.chunks.bigger.length} ${pluralize(
+            diff.chunks.bigger.length,
             'bundle',
             'bundles',
           )} got bigger`,
-          isEmpty: diff.changes.bigger.length === 0,
-          children: renderBiggerTable({ assets: diff.changes.bigger }),
+          isEmpty: diff.chunks.bigger.length === 0,
+          children: renderBiggerTable({ assets: diff.chunks.bigger }),
         }),
 
         renderSection({
-          title: `🎉 ${diff.changes.smaller.length} ${pluralize(
-            diff.changes.smaller.length,
+          title: `🎉 ${diff.chunks.smaller.length} ${pluralize(
+            diff.chunks.smaller.length,
             'bundle',
             'bundles',
           )} got smaller`,
-          isEmpty: diff.changes.smaller.length === 0,
-          children: renderSmallerTable({ assets: diff.changes.smaller }),
+          isEmpty: diff.chunks.smaller.length === 0,
+          children: renderSmallerTable({ assets: diff.chunks.smaller }),
         }),
 
         renderSection({
-          title: `🤔 ${diff.changes.added.length} ${pluralize(
-            diff.changes.added.length,
+          title: `🤔 ${diff.chunks.added.length} ${pluralize(
+            diff.chunks.added.length,
             'bundle was',
             'bundles were',
           )} added`,
-          isEmpty: diff.changes.added.length === 0,
-          children: renderAddedTable({ assets: diff.changes.added }),
+          isEmpty: diff.chunks.added.length === 0,
+          children: renderAddedTable({ assets: diff.chunks.added }),
         }),
 
         renderSection({
-          title: `👏 ${diff.changes.removed.length} ${pluralize(
-            diff.changes.removed.length,
+          title: `👏 ${diff.chunks.removed.length} ${pluralize(
+            diff.chunks.removed.length,
             'bundle was',
             'bundles were',
           )} removed`,
-          isEmpty: diff.changes.removed.length === 0,
-          children: renderRemovedTable({ assets: diff.changes.removed }),
+          isEmpty: diff.chunks.removed.length === 0,
+          children: renderRemovedTable({ assets: diff.chunks.removed }),
         }),
 
         renderCollapsibleSection({
           title: `${
-            diff.changes.unchanged.filter(
+            diff.chunks.negligible.filter(
               (asset) => Math.abs(asset.ratio) > 0.0001,
             ).length
           } ${pluralize(
-            diff.changes.unchanged.length,
+            diff.chunks.negligible.length,
             'bundle',
             'bundles',
           )} changed by less than ${formatRatio(inputs.diffThreshold)} 🧐`,
-          isEmpty: diff.changes.unchanged.length === 0,
+          isEmpty: diff.chunks.negligible.length === 0,
           children: renderNegligibleTable({
-            assets: diff.changes.unchanged.filter(
+            assets: diff.chunks.negligible.filter(
               (asset) => Math.abs(asset.ratio) > 0.0001,
             ),
           }),
+        }),
+
+        renderCollapsibleSection({
+          title: 'Long-term caching impact',
+          isEmpty: !affectsLongTermCaching(diff),
+          ifEmpty: 'No impact.',
+          children: renderLongTermCachingSummary({ diff }),
         }),
 
         renderReductionCelebration({ diff }),
@@ -273,7 +281,7 @@ async function run() {
     // If there was an increase in bundle size, add a label to the pull request
     // It's possible there was a net decrease, and that some critical bundles
     // increased.
-    if (diff.changes.added.length > 0 || diff.changes.bigger.length > 0) {
+    if (diff.chunks.added.length > 0 || diff.chunks.bigger.length > 0) {
       await octokit.rest.issues.addLabels({
         owner,
         repo,
@@ -306,7 +314,7 @@ async function run() {
     // If there was a decrease in bundle size, add a label to the pull request
     // It's possible there was a net increase, and that some critical bundles
     // decreased.
-    if (diff.changes.removed.length > 0 || diff.changes.smaller.length > 0) {
+    if (diff.chunks.removed.length > 0 || diff.chunks.smaller.length > 0) {
       await octokit.rest.issues.addLabels({
         owner,
         repo,

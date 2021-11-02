@@ -17,6 +17,17 @@ No significant changes.
 "
 `;
 
+exports[`long-term cache invalidation summary 1`] = `
+"75 chunks will be invalidated from [long-term caching](https://webpack.js.org/guides/caching/), and 0 chunks will be added.
+Here's a breakdown of the number of bytes our customers will need to download once this pull request is deployed:
+|             |       Bytes | % of total JavaScript code |
+| :---------- | ----------: | -------------------------: |
+| Invalidated | \`12,304 kB\` |                     \`100%\` |
+| Added       |      \`0 kB\` |                       \`0%\` |
+| **Total**   | \`12,304 kB\` |                     \`100%\` |
+ℹ️ Lower is better"
+`;
+
 exports[`negligible diff 1`] = `
 "| Asset                                |    Base size |    Head size |      Delta ▾ |   Delta % |
 | :----------------------------------- | -----------: | -----------: | -----------: | --------: |
@@ -63,6 +74,14 @@ exports[`summary 1`] = `
 | Added     |       \`+0 kB\` |
 | Removed   |       \`+0 kB\` |
 | **Total** | **\`-105 kB\`** |"
+`;
+
+exports[`total downloaded bytes diff 1`] = `
+"|           | Total downloaded |
+| --------- | ---------------- |
+| Base      | 12,454 kB        |
+| Head      | 12,304 kB        |
+| **Delta** | \`-150 kB\`        |"
 `;
 
 exports[`unchanged diff 1`] = `

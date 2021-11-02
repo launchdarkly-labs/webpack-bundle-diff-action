@@ -76,39 +76,41 @@ ${!isEmpty ? children : 'No significant changes.'}
 export function renderCollapsibleSection({
   title,
   isEmpty = false,
+  ifEmpty = 'No other changes.',
   children,
 }: {
   title: string;
   isEmpty?: boolean;
+  ifEmpty?: string;
   children: string;
 }) {
   return `
 <details>
   <summary>${title}</summary>
 
-${!isEmpty ? children : 'No other changes.'}
+${!isEmpty ? children : ifEmpty}
 
 </details>
 `;
 }
 
 export function renderSummaryTable({ diff }: { diff: Diff }) {
-  const bigger = Object.values(diff.changes.bigger).reduce(
+  const bigger = Object.values(diff.chunks.bigger).reduce(
     (total, asset) => total + asset.delta,
     0,
   );
 
-  const smaller = Object.values(diff.changes.smaller).reduce(
+  const smaller = Object.values(diff.chunks.smaller).reduce(
     (total, asset) => total + asset.delta,
     0,
   );
 
-  const added = Object.values(diff.changes.added).reduce(
+  const added = Object.values(diff.chunks.added).reduce(
     (total, asset) => total + asset.delta,
     0,
   );
 
-  const removed = Object.values(diff.changes.removed).reduce(
+  const removed = Object.values(diff.chunks.removed).reduce(
     (total, asset) => total + asset.delta,
     0,
   );
@@ -163,8 +165,82 @@ export function renderRemovedTable({ assets }: { assets: AssetDiff[] }) {
   );
 }
 
-export function renderCachingTable() {
-  return markdownTable([]);
+export function renderTotalDownloadedBytesTable({ diff }: { diff: Diff }) {
+  return markdownTable([
+    ['', 'Total downloaded'],
+    ['Base', formatBytes(diff.totalBytes.base)],
+    ['Head', formatBytes(diff.totalBytes.head)],
+    [
+      md.emphasis('Delta'),
+      md.code(
+        formatBytes(diff.totalBytes.head - diff.totalBytes.base, {
+          signed: true,
+        }),
+      ),
+    ],
+  ]);
+}
+
+export function renderLongTermCachingSummary({ diff }: { diff: Diff }) {
+  const invalidatedCount =
+    diff.chunks.bigger.length +
+    diff.chunks.smaller.length +
+    diff.chunks.negligible.length;
+  const invalidatedBytes =
+    diff.chunks.bigger
+      .map((asset) => asset.headSize)
+      .reduce((total, size) => total + size, 0) +
+    diff.chunks.smaller
+      .map((asset) => asset.headSize)
+      .reduce((total, size) => total + size, 0) +
+    diff.chunks.negligible
+      .map((asset) => asset.headSize)
+      .reduce((total, size) => total + size, 0);
+
+  const addedCount = diff.chunks.added.length;
+  const addedBytes = diff.chunks.added
+    .map((asset) => asset.headSize)
+    .reduce((total, size) => total + size, 0);
+
+  const totalBytes = invalidatedBytes + addedBytes;
+
+  return [
+    `${invalidatedCount} ${pluralize(
+      invalidatedCount,
+      'chunk',
+      'chunks',
+    )} will be invalidated from [long-term caching](https://webpack.js.org/guides/caching/), and ${addedCount} ${pluralize(
+      addedCount,
+      'chunk',
+      'chunks',
+    )} will be added.`,
+
+    "Here's a breakdown of the number of bytes our customers will need to download once this pull request is deployed:",
+
+    markdownTable(
+      [
+        ['', 'Bytes', '% of total JavaScript code'],
+        [
+          'Invalidated',
+          md.code(formatBytes(invalidatedBytes)),
+          md.code(formatRatio(invalidatedBytes / totalBytes)),
+        ],
+        [
+          'Added',
+          md.code(formatBytes(addedBytes)),
+          md.code(formatRatio(addedBytes / totalBytes)),
+        ],
+        [
+          md.emphasis('Total'),
+          md.code(formatBytes(totalBytes)),
+          md.code(formatRatio(1)),
+        ],
+      ],
+      { align: ['l', 'r', 'r'] },
+    ),
+
+    'ℹ️ Lower is better',
+  ].join('\n');
 }
 
 export function renderNegligibleTable({ assets }: { assets: AssetDiff[] }) {
@@ -296,10 +372,10 @@ export function renderCommitSummary({
 
 export function renderReductionCelebration({ diff }: { diff: Diff }) {
   if (
-    diff.changes.added.length === 0 &&
-    diff.changes.bigger.length === 0 &&
-    diff.changes.removed.length > 0 &&
-    diff.changes.smaller.length > 0
+    diff.chunks.added.length === 0 &&
+    diff.chunks.bigger.length === 0 &&
+    diff.chunks.removed.length > 0 &&
+    diff.chunks.smaller.length > 0
   ) {
     return `
 Amazing! You reduced the amount of code we ship to our customers, which is great way to help improve performance. Every step counts.

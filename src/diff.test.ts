@@ -1,6 +1,7 @@
 import { getDiff } from './diff';
 import {
-  renderCachingTable,
+  renderTotalDownloadedBytesTable,
+  renderLongTermCachingSummary,
   renderSection,
   renderAddedTable,
   renderBiggerTable,
@@ -28,13 +29,13 @@ const diff = getDiff(
 test('section', () => {
   expect(
     renderSection({
-      title: `⚠️ ${diff.changes.bigger.length} ${pluralize(
-        diff.changes.bigger.length,
+      title: `⚠️ ${diff.chunks.bigger.length} ${pluralize(
+        diff.chunks.bigger.length,
         'bundle',
         'bundles',
       )} got bigger`,
-      isEmpty: diff.changes.bigger.length === 0,
-      children: renderBiggerTable({ assets: diff.changes.bigger }),
+      isEmpty: diff.chunks.bigger.length === 0,
+      children: renderBiggerTable({ assets: diff.chunks.bigger }),
     }),
   ).toMatchSnapshot();
 });
@@ -42,8 +43,8 @@ test('section', () => {
 test('empty section', () => {
   expect(
     renderSection({
-      title: `⚠️ ${diff.changes.bigger.length} ${pluralize(
-        diff.changes.bigger.length,
+      title: `⚠️ ${diff.chunks.bigger.length} ${pluralize(
+        diff.chunks.bigger.length,
         'bundle',
         'bundles',
       )} got bigger`,
@@ -54,28 +55,24 @@ test('empty section', () => {
 });
 
 test('added diff', () => {
-  expect(renderAddedTable({ assets: diff.changes.added })).toMatchSnapshot();
+  expect(renderAddedTable({ assets: diff.chunks.added })).toMatchSnapshot();
 });
 
 test('removed diff', () => {
-  expect(
-    renderRemovedTable({ assets: diff.changes.removed }),
-  ).toMatchSnapshot();
+  expect(renderRemovedTable({ assets: diff.chunks.removed })).toMatchSnapshot();
 });
 
 test('bigger diff', () => {
-  expect(renderBiggerTable({ assets: diff.changes.bigger })).toMatchSnapshot();
+  expect(renderBiggerTable({ assets: diff.chunks.bigger })).toMatchSnapshot();
 });
 
 test('smaller diff', () => {
-  expect(
-    renderSmallerTable({ assets: diff.changes.smaller }),
-  ).toMatchSnapshot();
+  expect(renderSmallerTable({ assets: diff.chunks.smaller })).toMatchSnapshot();
 });
 
 test('unchanged diff', () => {
   expect(
-    renderUnchangedTable({ assets: diff.changes.unchanged }),
+    renderUnchangedTable({ assets: diff.chunks.negligible }),
   ).toMatchSnapshot();
 });
 
@@ -90,13 +87,17 @@ test('reduction celebration', () => {
 test('negligible diff', () => {
   expect(
     renderNegligibleTable({
-      assets: diff.changes.unchanged.filter(
+      assets: diff.chunks.negligible.filter(
         (asset) => Math.abs(asset.ratio) > 0.0001,
       ),
     }),
   ).toMatchSnapshot();
 });
 
-test('long-term caching diff', () => {
-  expect(renderCachingTable());
+test('total downloaded bytes diff', () => {
+  expect(renderTotalDownloadedBytesTable({ diff })).toMatchSnapshot();
+});
+
+test('long-term cache invalidation summary', () => {
+  expect(renderLongTermCachingSummary({ diff })).toMatchSnapshot();
 });

@@ -19,13 +19,16 @@ export type AssetDiff = {
 };
 
 export type Diff = {
-  caching: {};
-  changes: {
+  totalBytes: {
+    base: number;
+    head: number;
+  };
+  chunks: {
     added: AssetDiff[];
     removed: AssetDiff[];
     bigger: AssetDiff[];
     smaller: AssetDiff[];
-    unchanged: AssetDiff[];
+    negligible: AssetDiff[];
   };
 };
 
@@ -102,13 +105,16 @@ export function getDiff(
   };
 
   let diff: Diff = {
-    caching: {},
-    changes: {
+    totalBytes: {
+      base: 0,
+      head: 0,
+    },
+    chunks: {
       added: [],
       removed: [],
       bigger: [],
       smaller: [],
-      unchanged: [],
+      negligible: [],
     },
   };
 
@@ -121,7 +127,7 @@ export function getDiff(
     // Removed
     if (!headAsset) {
       const headSize = 0;
-      diff.changes.removed.push({
+      diff.chunks.removed.push({
         name,
         baseSize: baseAsset.parsedSize,
         headSize,
@@ -140,12 +146,18 @@ export function getDiff(
         delta,
       };
 
+      diff.totalBytes.base += baseSize;
+      diff.totalBytes.head += headSize;
+
       if (ratio > diffThreshold) {
-        diff.changes.bigger.push(d);
+        // Bigger
+        diff.chunks.bigger.push(d);
       } else if (ratio < -1 * diffThreshold) {
-        diff.changes.smaller.push(d);
+        // Smaller
+        diff.chunks.smaller.push(d);
       } else {
-        diff.changes.unchanged.push(d);
+        // Negligible
+        diff.chunks.negligible.push(d);
       }
     }
   }
@@ -158,7 +170,7 @@ export function getDiff(
 
     // Added
     if (!baseAsset) {
-      diff.changes.added.push({
+      diff.chunks.added.push({
         name,
         baseSize: 0,
         headSize,
@@ -169,4 +181,13 @@ export function getDiff(
   }
 
   return diff;
+}
+
+export function affectsLongTermCaching(diff: Diff) {
+  return (
+    diff.chunks.added.length > 0 ||
+    diff.chunks.bigger.length > 0 ||
+    diff.chunks.smaller.length > 0 ||
+    diff.chunks.negligible.length > 0
+  );
 }
