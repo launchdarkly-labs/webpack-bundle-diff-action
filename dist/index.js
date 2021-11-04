@@ -7024,7 +7024,12 @@ function renderLongTermCachingSummary({ diff }) {
                 md.code(exports.formatRatio(addedBytes / totalBytes)),
             ],
             [
-                'Unchanged',
+                md.emphasis('Total uncached'),
+                md.code(formatBytes(invalidatedBytes + addedBytes)),
+                md.code(exports.formatRatio((invalidatedBytes + addedBytes) / totalBytes)),
+            ],
+            [
+                md.emphasis('Total cached'),
                 md.code(formatBytes(unchangedBytes)),
                 md.code(exports.formatRatio(unchangedBytes / totalBytes)),
             ],
