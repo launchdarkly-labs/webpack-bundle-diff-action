@@ -182,10 +182,16 @@ export function renderTotalDownloadedBytesTable({ diff }: { diff: Diff }) {
 }
 
 export function renderLongTermCachingSummary({ diff }: { diff: Diff }) {
+  const unchangedBytes = diff.chunks.negligible
+    .filter((asset) => asset.delta === 0)
+    .map((asset) => asset.headSize)
+    .reduce((total, size) => total + size, 0);
+
   const invalidatedCount =
     diff.chunks.bigger.length +
     diff.chunks.smaller.length +
     diff.chunks.negligible.length;
+
   const invalidatedBytes =
     diff.chunks.bigger
       .map((asset) => asset.headSize)
@@ -203,7 +209,7 @@ export function renderLongTermCachingSummary({ diff }: { diff: Diff }) {
     .map((asset) => asset.headSize)
     .reduce((total, size) => total + size, 0);
 
-  const totalBytes = invalidatedBytes + addedBytes;
+  const totalBytes = addedBytes + invalidatedBytes + unchangedBytes;
 
   return [
     `${invalidatedCount} ${pluralize(
@@ -230,6 +236,11 @@ export function renderLongTermCachingSummary({ diff }: { diff: Diff }) {
           'Added',
           md.code(formatBytes(addedBytes)),
           md.code(formatRatio(addedBytes / totalBytes)),
+        ],
+        [
+          'Unchanged',
+          md.code(formatBytes(unchangedBytes)),
+          md.code(formatRatio(unchangedBytes / totalBytes)),
         ],
         [
           md.emphasis('Total'),

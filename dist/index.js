@@ -6986,6 +6986,10 @@ function renderTotalDownloadedBytesTable({ diff }) {
 }
 exports.renderTotalDownloadedBytesTable = renderTotalDownloadedBytesTable;
 function renderLongTermCachingSummary({ diff }) {
+    const unchangedBytes = diff.chunks.negligible
+        .filter((asset) => asset.delta === 0)
+        .map((asset) => asset.headSize)
+        .reduce((total, size) => total + size, 0);
     const invalidatedCount = diff.chunks.bigger.length +
         diff.chunks.smaller.length +
         diff.chunks.negligible.length;
@@ -7003,7 +7007,7 @@ function renderLongTermCachingSummary({ diff }) {
     const addedBytes = diff.chunks.added
         .map((asset) => asset.headSize)
         .reduce((total, size) => total + size, 0);
-    const totalBytes = invalidatedBytes + addedBytes;
+    const totalBytes = addedBytes + invalidatedBytes + unchangedBytes;
     return [
         `${invalidatedCount} ${pluralize(invalidatedCount, 'chunk', 'chunks')} will be invalidated from [long-term caching](https://webpack.js.org/guides/caching/), and ${addedCount} ${pluralize(addedCount, 'chunk', 'chunks')} will be added.`,
         "Here's a breakdown of the number of bytes our customers will need to download once this pull request is deployed:",
@@ -7018,6 +7022,11 @@ function renderLongTermCachingSummary({ diff }) {
                 'Added',
                 md.code(formatBytes(addedBytes)),
                 md.code(exports.formatRatio(addedBytes / totalBytes)),
+            ],
+            [
+                'Unchanged',
+                md.code(formatBytes(unchangedBytes)),
+                md.code(exports.formatRatio(unchangedBytes / totalBytes)),
             ],
             [
                 md.emphasis('Total'),
