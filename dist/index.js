@@ -6996,6 +6996,7 @@ function renderLongTermCachingSummary({ diff }) {
             .map((asset) => asset.headSize)
             .reduce((total, size) => total + size, 0) +
         diff.chunks.negligible
+            .filter((asset) => asset.delta > 0)
             .map((asset) => asset.headSize)
             .reduce((total, size) => total + size, 0);
     const addedCount = diff.chunks.added.length;
