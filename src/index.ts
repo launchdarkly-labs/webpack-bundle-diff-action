@@ -146,7 +146,7 @@ async function run() {
     const diff = getDiff(analysis, { diffThreshold: inputs.diffThreshold });
 
     const numberOfChanges = Object.entries(diff.chunks)
-      .filter(([kind]) => kind !== 'unchanged')
+      .filter(([kind]) => kind !== 'negligible')
       .map(([_, assets]) => assets.length)
       .reduce((total, size) => total + size, 0);
 
