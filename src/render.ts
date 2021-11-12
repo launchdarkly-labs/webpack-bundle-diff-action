@@ -190,7 +190,7 @@ export function renderLongTermCachingSummary({ diff }: { diff: Diff }) {
   const invalidatedCount =
     diff.chunks.bigger.length +
     diff.chunks.smaller.length +
-    diff.chunks.negligible.length;
+    diff.chunks.negligible.filter((asset) => asset.delta > 0).length;
 
   const invalidatedBytes =
     diff.chunks.bigger

@@ -6998,7 +6998,7 @@ function renderLongTermCachingSummary({ diff }) {
         .reduce((total, size) => total + size, 0);
     const invalidatedCount = diff.chunks.bigger.length +
         diff.chunks.smaller.length +
-        diff.chunks.negligible.length;
+        diff.chunks.negligible.filter((asset) => asset.delta > 0).length;
     const invalidatedBytes = diff.chunks.bigger
         .map((asset) => asset.headSize)
         .reduce((total, size) => total + size, 0) +
