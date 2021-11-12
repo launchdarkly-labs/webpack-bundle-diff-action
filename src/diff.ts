@@ -188,6 +188,6 @@ export function affectsLongTermCaching(diff: Diff) {
     diff.chunks.added.length > 0 ||
     diff.chunks.bigger.length > 0 ||
     diff.chunks.smaller.length > 0 ||
-    diff.chunks.negligible.length > 0
+    diff.chunks.negligible.filter((asset) => asset.delta > 0).length > 0
   );
 }
