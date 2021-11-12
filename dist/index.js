@@ -4539,6 +4539,12 @@ async function run() {
                         assets: diff.chunks.negligible.filter((asset) => Math.abs(asset.ratio) > 0.0001),
                     }),
                 }),
+                render_1.renderCollapsibleSection({
+                    title: 'Long-term caching impact',
+                    isEmpty: !diff_1.affectsLongTermCaching(diff),
+                    ifEmpty: 'No impact.',
+                    children: render_1.renderLongTermCachingSummary({ diff }),
+                }),
                 '---',
                 `[Visit the workflow page](https://github.com/launchdarkly/gonfalon/actions/runs/${runId}) to download the artifacts for this run. You can visualize those with [webpack-bundle-analyzer](https://github.com/webpack-contrib/webpack-bundle-analyzer) or online with [statoscope](https://statoscope.tech/).`,
             ].join('\n');

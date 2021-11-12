@@ -178,6 +178,13 @@ async function run() {
           }),
         }),
 
+        renderCollapsibleSection({
+          title: 'Long-term caching impact',
+          isEmpty: !affectsLongTermCaching(diff),
+          ifEmpty: 'No impact.',
+          children: renderLongTermCachingSummary({ diff }),
+        }),
+
         '---',
 
         `[Visit the workflow page](https://github.com/launchdarkly/gonfalon/actions/runs/${runId}) to download the artifacts for this run. You can visualize those with [webpack-bundle-analyzer](https://github.com/webpack-contrib/webpack-bundle-analyzer) or online with [statoscope](https://statoscope.tech/).`,
