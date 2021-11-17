@@ -4211,7 +4211,8 @@ function affectsLongTermCaching(diff) {
     return (diff.chunks.added.length > 0 ||
         diff.chunks.bigger.length > 0 ||
         diff.chunks.smaller.length > 0 ||
-        diff.chunks.negligible.filter((asset) => asset.delta > 0).length > 0);
+        diff.chunks.negligible.filter((asset) => Math.abs(asset.delta) > 0).length >
+            0);
 }
 exports.affectsLongTermCaching = affectsLongTermCaching;
 
@@ -6998,7 +6999,7 @@ function renderLongTermCachingSummary({ diff }) {
         .reduce((total, size) => total + size, 0);
     const invalidatedCount = diff.chunks.bigger.length +
         diff.chunks.smaller.length +
-        diff.chunks.negligible.filter((asset) => asset.delta > 0).length;
+        diff.chunks.negligible.filter((asset) => Math.abs(asset.delta) > 0).length;
     const invalidatedBytes = diff.chunks.bigger
         .map((asset) => asset.headSize)
         .reduce((total, size) => total + size, 0) +
@@ -7006,9 +7007,10 @@ function renderLongTermCachingSummary({ diff }) {
             .map((asset) => asset.headSize)
             .reduce((total, size) => total + size, 0) +
         diff.chunks.negligible
-            .filter((asset) => asset.delta > 0)
+            .filter((asset) => Math.abs(asset.delta) > 0)
             .map((asset) => asset.headSize)
             .reduce((total, size) => total + size, 0);
+    console.log(diff.chunks.negligible.filter((a) => a.name.includes('ManageAuthorization')));
     const addedCount = diff.chunks.added.length;
     const addedBytes = diff.chunks.added
         .map((asset) => asset.headSize)

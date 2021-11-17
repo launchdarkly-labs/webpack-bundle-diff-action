@@ -190,7 +190,7 @@ export function renderLongTermCachingSummary({ diff }: { diff: Diff }) {
   const invalidatedCount =
     diff.chunks.bigger.length +
     diff.chunks.smaller.length +
-    diff.chunks.negligible.filter((asset) => asset.delta > 0).length;
+    diff.chunks.negligible.filter((asset) => Math.abs(asset.delta) > 0).length;
 
   const invalidatedBytes =
     diff.chunks.bigger
@@ -200,9 +200,15 @@ export function renderLongTermCachingSummary({ diff }: { diff: Diff }) {
       .map((asset) => asset.headSize)
       .reduce((total, size) => total + size, 0) +
     diff.chunks.negligible
-      .filter((asset) => asset.delta > 0)
+      .filter((asset) => Math.abs(asset.delta) > 0)
       .map((asset) => asset.headSize)
       .reduce((total, size) => total + size, 0);
+
+  console.log(
+    diff.chunks.negligible.filter((a) =>
+      a.name.includes('ManageAuthorization'),
+    ),
+  );
 
   const addedCount = diff.chunks.added.length;
   const addedBytes = diff.chunks.added
