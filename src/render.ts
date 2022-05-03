@@ -73,6 +73,21 @@ ${!isEmpty ? children : 'No significant changes.'}
 `;
 }
 
+export function renderViolationSection({
+  title,
+  isEmpty = false,
+  children,
+}: {
+  title: string;
+  isEmpty?: boolean;
+  children: string;
+}) {
+  return `
+  ${!isEmpty ? `#### ${title}` : ''}
+  ${!isEmpty ? children : ''}
+`;
+}
+
 export function renderCollapsibleSection({
   title,
   isEmpty = false,
@@ -303,6 +318,36 @@ export function renderNegligibleTable({ assets }: { assets: AssetDiff[] }) {
   );
 }
 
+export function renderViolationsTable({
+  violations,
+}: {
+  violations: AssetDiff[];
+}) {
+  return markdownTable(
+    [
+      [
+        'Asset',
+        'Base size',
+        'Head size',
+        sortedColumn('Delta'),
+        'Delta %',
+        'Budget',
+      ],
+      ...violations
+        .sort(deltaDescending)
+        .map((asset) => [
+          md.code(asset.name),
+          md.code(formatBytes(asset.baseSize)),
+          md.code(formatBytes(asset.headSize)),
+          md.code(formatBytes(asset.delta)),
+          md.code(formatRatio(asset.ratio)),
+          md.code(asset?.budget + '%'),
+        ]),
+    ],
+    { align: ['l', 'r', 'r', 'r', 'r'] },
+  );
+}
+
 export function renderBiggerTable({ assets }: { assets: AssetDiff[] }) {
   return markdownTable(
     [
@@ -403,7 +448,24 @@ export function renderReductionCelebration({ diff }: { diff: Diff }) {
     return `
 Amazing! You reduced the amount of code we ship to our customers, which is great way to help improve performance. Every step counts.
 
-![](https://i.gggl.es/zqN9EdmeD4aY.gif)
+![gif](https://i.gggl.es/zqN9EdmeD4aY.gif)
 `;
+  }
+}
+
+export function renderViolationWarning({
+  diff,
+  shouldGateFailures,
+}: {
+  diff: Diff;
+  shouldGateFailures: boolean;
+}) {
+  if (diff.chunks.violations.length > 0 && shouldGateFailures) {
+    return (
+      'Sorry you exceeded the budget for critical bundles.<br/>' +
+      'Please double check the above violation table.<br/>' +
+      'Checkout out this doc on managing frontend bundle sizes [Confluence](https://launchdarkly.atlassian.net/wiki/spaces/ENG/pages/1711866153)</br>' +
+      '![gif](https://i.gggl.es/sqJ_RRw-qU3J.gif)'
+    );
   }
 }

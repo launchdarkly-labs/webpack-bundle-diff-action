@@ -13,6 +13,10 @@ inputs:
     description: 'The label to add to PRs that decreased the size of any bundle'
     required: true
     default: '🎉 bundle decrease'
+  violation-label:
+    description: 'The label to add to PRs that decreased the size of any bundle'
+    required: true
+    default: '❌ bundle budget violation'
   base-bundle-analysis-report-path:
     description: 'The path to the json webpack-bundle-analyzer report file for the base branch'
     required: true
@@ -22,6 +26,10 @@ inputs:
   github-token:
     description: 'The Github token used to comment on pull requests'
     required: true
+  should-gate-exceeded-budget:
+    description: 'if targeted-bundles is declared, fail build if budget is exceeded for a targeted bundle'
+    required: false
+
 runs:
   using: 'node12'
   main: 'dist/index.js'

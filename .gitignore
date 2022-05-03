@@ -3,4 +3,3 @@ lib/**/*
 npm-debug.log*
 .DS_Store
 .python-version
-**-webpack-**.json

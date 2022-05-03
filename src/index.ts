@@ -2,8 +2,8 @@ import * as core from '@actions/core';
 import * as github from '@actions/github';
 import { access, constants } from 'fs';
 import * as path from 'path';
-
-import { affectsLongTermCaching, getDiff } from './diff';
+// @ts-nocheck
+import { affectsLongTermCaching, BundleBudget, getDiff } from './diff';
 import {
   renderSection,
   renderCollapsibleSection,
@@ -19,6 +19,9 @@ import {
   renderGithubCompareLink,
   renderCommitSummary,
   renderLongTermCachingSummary,
+  renderViolationsTable,
+  renderViolationSection,
+  renderViolationWarning,
 } from './render';
 
 const frontendExtensions = ['js', 'css', 'ts', 'tsx', 'json'];
@@ -29,6 +32,21 @@ async function assertFileExists(path: string) {
       error ? reject(new Error(`${path} does not exist`)) : resolve(),
     ),
   );
+}
+
+function processBundleBudgets() {
+  // bundles inputs will be dynamic
+  // e.g bundle-{name}: 50
+  const bundleBudgets: BundleBudget[] = [];
+  for (let [k, v] of Object.entries(process.env)) {
+    // all github action inputs have this prefix "INPUT_", the real input starts with bundle-
+    if (k.startsWith('INPUT_BUNDLE')) {
+      let name = k.replace('INPUT_BUNDLE-', '').toLowerCase() + '.js';
+      let budget = Number(v);
+      bundleBudgets.push({ name, budget });
+    }
+  }
+  return bundleBudgets;
 }
 
 async function run() {
@@ -43,6 +61,7 @@ async function run() {
       diffThreshold: parseFloat(core.getInput('diff-threshold')),
       increaseLabel: core.getInput('increase-label'),
       decreaseLabel: core.getInput('decrease-label'),
+      violationLabel: core.getInput('violation-label'),
       base: {
         report: core.getInput('base-bundle-analysis-report-path'),
       },
@@ -50,6 +69,8 @@ async function run() {
         report: core.getInput('head-bundle-analysis-report-path'),
       },
       githubToken: core.getInput('github-token'),
+      bundleBudgets: processBundleBudgets(),
+      shouldGateFailures: core.getInput('should-gate-exceeded-budget'),
     };
 
     const runId = github.context.runId;
@@ -143,7 +164,11 @@ async function run() {
       },
     };
 
-    const diff = getDiff(analysis, { diffThreshold: inputs.diffThreshold });
+    const diff = getDiff(analysis, {
+      diffThreshold: inputs.diffThreshold,
+      bundleBudgets: inputs.bundleBudgets,
+    });
+    core.info(JSON.stringify(diff.chunks));
 
     const numberOfChanges = Object.entries(diff.chunks)
       .filter(([kind]) => kind !== 'negligible')
@@ -205,6 +230,20 @@ async function run() {
           children: renderSummaryTable({ diff }),
         }),
 
+        renderViolationSection({
+          title: `❌❌❌❌❌❌❌❌❌❌ ${
+            diff.chunks.violations.length
+          } ${pluralize(
+            diff.chunks.violations.length,
+            'bundle',
+            'bundles',
+          )} violated budgets ❌❌❌❌❌❌❌❌❌❌`,
+          isEmpty: diff.chunks.violations.length === 0,
+          children: renderViolationsTable({
+            violations: diff.chunks.violations,
+          }),
+        }),
+
         renderSection({
           title: `⚠️ ${diff.chunks.bigger.length} ${pluralize(
             diff.chunks.bigger.length,
@@ -212,7 +251,9 @@ async function run() {
             'bundles',
           )} got bigger`,
           isEmpty: diff.chunks.bigger.length === 0,
-          children: renderBiggerTable({ assets: diff.chunks.bigger }),
+          children: renderBiggerTable({
+            assets: diff.chunks.bigger,
+          }),
         }),
 
         renderSection({
@@ -271,6 +312,10 @@ async function run() {
         }),
 
         renderReductionCelebration({ diff }),
+        renderViolationWarning({
+          diff,
+          shouldGateFailures: Boolean(inputs.shouldGateFailures),
+        }),
 
         '---',
 
@@ -295,6 +340,14 @@ async function run() {
         issue_number: pullRequestId,
         labels: [inputs.increaseLabel],
       });
+      if (diff.chunks.violations.length > 0) {
+        await octokit.rest.issues.addLabels({
+          owner,
+          repo,
+          issue_number: pullRequestId,
+          labels: [inputs.violationLabel],
+        });
+      }
     } else {
       const labels = await octokit.rest.issues.listLabelsOnIssue({
         owner,
@@ -349,6 +402,12 @@ async function run() {
           );
         }
       }
+    }
+
+    if (inputs.shouldGateFailures && diff.chunks.violations.length) {
+      core.setFailed(
+        'exceeded budget for critical bundles; please double check the above table and your code imports and run npm:webpack to diagnose',
+      );
     }
 
     core.info(
