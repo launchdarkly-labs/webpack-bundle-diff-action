@@ -26,7 +26,7 @@ inputs:
   github-token:
     description: 'The Github token used to comment on pull requests'
     required: true
-  should-gate-exceeded-budget:
+  should-block-pr-on-exceeded-budget:
     description: 'if targeted-bundles is declared, fail build if budget is exceeded for a targeted bundle'
     required: false
 

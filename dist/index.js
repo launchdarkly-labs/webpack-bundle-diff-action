@@ -4968,7 +4968,7 @@ async function run() {
             },
             githubToken: core.getInput('github-token'),
             bundleBudgets: processBundleBudgets(),
-            shouldGateFailures: core.getInput('should-gate-exceeded-budget'),
+            shouldGateFailures: core.getInput('should-block-pr-on-exceeded-budget'),
         };
         const runId = github.context.runId;
         const owner = github.context.repo.owner;
