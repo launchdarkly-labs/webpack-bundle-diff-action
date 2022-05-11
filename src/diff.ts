@@ -16,6 +16,7 @@ export type AssetDiff = {
   headSize: number;
   delta: number;
   ratio: number;
+  budget?: number;
 };
 
 export type Diff = {
@@ -29,8 +30,11 @@ export type Diff = {
     bigger: AssetDiff[];
     smaller: AssetDiff[];
     negligible: AssetDiff[];
+    violations: AssetDiff[];
   };
 };
+
+export type BundleBudget = { name: string; budget: number };
 
 const ASSET_NAME_REGEXP = /^(?<assetname>[a-zA-Z0-9\.\-_]+)\.([a-zA-Z0-9]{20})\.(?<extension>js|css)$/;
 
@@ -52,7 +56,10 @@ export function getDiff(
     base: { report: BundleAnalyzerPlugin.JsonReport };
     head: { report: BundleAnalyzerPlugin.JsonReport };
   },
-  { diffThreshold }: { diffThreshold: number },
+  {
+    diffThreshold,
+    bundleBudgets,
+  }: { diffThreshold: number; bundleBudgets?: BundleBudget[] },
 ): Diff {
   const byName: {
     base: Record<string, FunkyAsset>;
@@ -115,6 +122,7 @@ export function getDiff(
       bigger: [],
       smaller: [],
       negligible: [],
+      violations: [],
     },
   };
 
@@ -178,6 +186,24 @@ export function getDiff(
         ratio: 1,
       });
     }
+  }
+
+  // violations
+  if (diff.chunks.bigger.length && bundleBudgets && bundleBudgets.length) {
+    diff.chunks.bigger.forEach((asset) => {
+      const isBundleInTargetedBundles = bundleBudgets.filter(
+        (bundleItem: BundleBudget) =>
+          bundleItem.name.toLocaleLowerCase() ===
+          asset.name.toLocaleLowerCase(),
+      );
+      if (isBundleInTargetedBundles.length) {
+        let budget = Number(isBundleInTargetedBundles?.shift()?.budget);
+        if (Number(asset.ratio * 100) > budget) {
+          asset.budget = budget;
+          diff.chunks.violations.push(asset);
+        }
+      }
+    });
   }
 
   return diff;

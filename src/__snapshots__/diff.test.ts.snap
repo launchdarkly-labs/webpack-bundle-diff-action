@@ -45,6 +45,15 @@ exports[`removed diff 1`] = `
 | :---- | -----: |"
 `;
 
+exports[`render bundle budget violation section 1`] = `
+"
+  #### ❌❌❌❌❌❌❌❌❌❌ 1 bundle violated budgets ❌❌❌❌❌❌❌❌❌❌
+  | Asset                   | Base size | Head size | Delta ▾ | Delta % | Budget |
+| :---------------------- | --------: | --------: | ------: | ------: | ------ |
+| \`DashboardContainer.js\` |  \`102 kB\` |  \`122 kB\` | \`20 kB\` |   \`19%\` | \`10%\`  |
+"
+`;
+
 exports[`section 1`] = `
 "
 #### ⚠️ 0 bundles got bigger

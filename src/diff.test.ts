@@ -12,6 +12,8 @@ import {
   renderReductionCelebration,
   renderNegligibleTable,
   pluralize,
+  renderViolationsTable,
+  renderViolationSection,
 } from './render';
 
 const diff = getDiff(
@@ -36,6 +38,39 @@ test('section', () => {
       )} got bigger`,
       isEmpty: diff.chunks.bigger.length === 0,
       children: renderBiggerTable({ assets: diff.chunks.bigger }),
+    }),
+  ).toMatchSnapshot();
+});
+
+const violationDiff = getDiff(
+  {
+    base: {
+      report: require('../violation-base-webpack-bundle-analyzer-report.json'),
+    },
+    head: {
+      report: require('../violation-head-webpack-bundle-analyzer-report.json'),
+    },
+  },
+  {
+    diffThreshold: 0.05,
+    bundleBudgets: [{ name: 'DashboardContainer.js', budget: 10 }],
+  },
+);
+
+test('render bundle budget violation section', () => {
+  expect(
+    renderViolationSection({
+      title: `❌❌❌❌❌❌❌❌❌❌ ${
+        violationDiff.chunks.violations.length
+      } ${pluralize(
+        violationDiff.chunks.violations.length,
+        'bundle',
+        'bundles',
+      )} violated budgets ❌❌❌❌❌❌❌❌❌❌`,
+      isEmpty: violationDiff.chunks.violations.length === 0,
+      children: renderViolationsTable({
+        violations: violationDiff.chunks.violations,
+      }),
     }),
   ).toMatchSnapshot();
 });
