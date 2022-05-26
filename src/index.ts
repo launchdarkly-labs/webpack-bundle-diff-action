@@ -355,6 +355,21 @@ async function run() {
         issue_number: pullRequestId,
       });
 
+      if (labels.data.find((label) => label.name === inputs.violationLabel)) {
+        try {
+          await octokit.rest.issues.removeLabel({
+            owner,
+            repo,
+            issue_number: pullRequestId,
+            name: inputs.violationLabel,
+          });
+        } catch (error) {
+          core.warning(
+            `Failed to remove "${inputs.violationLabel}" label from PR ${pullRequestId}`,
+          );
+        }
+      }
+
       if (labels.data.find((label) => label.name === inputs.increaseLabel)) {
         try {
           await octokit.rest.issues.removeLabel({
