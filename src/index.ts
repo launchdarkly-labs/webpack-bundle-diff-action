@@ -354,7 +354,7 @@ async function run() {
         repo,
         issue_number: pullRequestId,
       });
- 
+
       if (labels.data.find((label) => label.name === inputs.violationLabel)) {
         try {
           await octokit.rest.issues.removeLabel({
@@ -369,7 +369,7 @@ async function run() {
           );
         }
       }
- 
+
       if (labels.data.find((label) => label.name === inputs.increaseLabel)) {
         try {
           await octokit.rest.issues.removeLabel({
