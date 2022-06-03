@@ -347,6 +347,28 @@ async function run() {
           issue_number: pullRequestId,
           labels: [inputs.violationLabel],
         });
+      } else {
+        const violationlabels = await octokit.rest.issues.listLabelsOnIssue({
+          owner,
+          repo,
+          issue_number: pullRequestId,
+        });
+        core.info('violation labels');
+        core.info(JSON.stringify(violationlabels));
+        if (violationlabels.data.find((label) => label.name === inputs.violationLabel)) {
+          try {
+            await octokit.rest.issues.removeLabel({
+              owner,
+              repo,
+              issue_number: pullRequestId,
+              name: inputs.violationLabel,
+            });
+          } catch (error) {
+            core.warning(
+              `Failed to remove "${inputs.violationLabel}" label from PR ${pullRequestId}`,
+            );
+          }
+        }
       }
     } else {
       const labels = await octokit.rest.issues.listLabelsOnIssue({
@@ -354,21 +376,6 @@ async function run() {
         repo,
         issue_number: pullRequestId,
       });
-
-      if (labels.data.find((label) => label.name === inputs.violationLabel)) {
-        try {
-          await octokit.rest.issues.removeLabel({
-            owner,
-            repo,
-            issue_number: pullRequestId,
-            name: inputs.violationLabel,
-          });
-        } catch (error) {
-          core.warning(
-            `Failed to remove "${inputs.violationLabel}" label from PR ${pullRequestId}`,
-          );
-        }
-      }
 
       if (labels.data.find((label) => label.name === inputs.increaseLabel)) {
         try {

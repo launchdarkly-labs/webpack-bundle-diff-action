@@ -5158,6 +5158,28 @@ async function run() {
                     labels: [inputs.violationLabel],
                 });
             }
+            else {
+                const violationlabels = await octokit.rest.issues.listLabelsOnIssue({
+                    owner,
+                    repo,
+                    issue_number: pullRequestId,
+                });
+                core.info('violation labels');
+                core.info(JSON.stringify(violationlabels));
+                if (violationlabels.data.find((label) => label.name === inputs.violationLabel)) {
+                    try {
+                        await octokit.rest.issues.removeLabel({
+                            owner,
+                            repo,
+                            issue_number: pullRequestId,
+                            name: inputs.violationLabel,
+                        });
+                    }
+                    catch (error) {
+                        core.warning(`Failed to remove "${inputs.violationLabel}" label from PR ${pullRequestId}`);
+                    }
+                }
+            }
         }
         else {
             const labels = await octokit.rest.issues.listLabelsOnIssue({
@@ -7973,7 +7995,7 @@ function renderViolationWarning({ diff, shouldGateFailures, }) {
         return ('Sorry you exceeded the budget for critical bundles.<br/>' +
             'Please double check the above violation table.<br/>' +
             'Checkout out this doc on managing frontend bundle sizes [Confluence](https://launchdarkly.atlassian.net/wiki/spaces/ENG/pages/1711866153)</br>' +
-            '![gif](https://i.gggl.es/sqJ_RRw-qU3J.gif)');
+            '![gif](https://i.gggl.es/zvpp9Wh3Yjn1.gif)');
     }
 }
 exports.renderViolationWarning = renderViolationWarning;
