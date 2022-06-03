@@ -5140,6 +5140,28 @@ async function run() {
             issue_number: pullRequestId,
             body,
         });
+        if (diff.chunks.violations.length === 0) {
+            const violationlabels = await octokit.rest.issues.listLabelsOnIssue({
+                owner,
+                repo,
+                issue_number: pullRequestId,
+            });
+            core.info('violation labels');
+            core.info(JSON.stringify(violationlabels));
+            if (violationlabels.data.find((label) => label.name === inputs.violationLabel)) {
+                try {
+                    await octokit.rest.issues.removeLabel({
+                        owner,
+                        repo,
+                        issue_number: pullRequestId,
+                        name: inputs.violationLabel,
+                    });
+                }
+                catch (error) {
+                    core.warning(`Failed to remove "${inputs.violationLabel}" label from PR ${pullRequestId}`);
+                }
+            }
+        }
         // If there was an increase in bundle size, add a label to the pull request
         // It's possible there was a net decrease, and that some critical bundles
         // increased.
@@ -5157,28 +5179,6 @@ async function run() {
                     issue_number: pullRequestId,
                     labels: [inputs.violationLabel],
                 });
-            }
-            else {
-                const violationlabels = await octokit.rest.issues.listLabelsOnIssue({
-                    owner,
-                    repo,
-                    issue_number: pullRequestId,
-                });
-                core.info('violation labels');
-                core.info(JSON.stringify(violationlabels));
-                if (violationlabels.data.find((label) => label.name === inputs.violationLabel)) {
-                    try {
-                        await octokit.rest.issues.removeLabel({
-                            owner,
-                            repo,
-                            issue_number: pullRequestId,
-                            name: inputs.violationLabel,
-                        });
-                    }
-                    catch (error) {
-                        core.warning(`Failed to remove "${inputs.violationLabel}" label from PR ${pullRequestId}`);
-                    }
-                }
             }
         }
         else {
