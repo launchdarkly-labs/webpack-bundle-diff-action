@@ -7993,7 +7993,7 @@ function renderViolationWarning({ diff, shouldGateFailures, }) {
         return ('Sorry you exceeded the budget for critical bundles.<br/>' +
             'Please double check the above violation table.<br/>' +
             'Checkout out this doc on managing frontend bundle sizes [Confluence](https://launchdarkly.atlassian.net/wiki/spaces/ENG/pages/1711866153)</br>' +
-            '![gif](https://i.gggl.es/zvpp9Wh3Yjn1.gif)');
+            '![gif](https://i.gggl.es/sqJ_RRw-qU3J.gif)');
     }
 }
 exports.renderViolationWarning = renderViolationWarning;
