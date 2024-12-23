@@ -26,6 +26,8 @@ import {
 
 const frontendExtensions = ['js', 'css', 'ts', 'tsx', 'json'];
 
+const COMMENT_IDENTIFIER = '\n\n<!-- bundle-analysis-comment -->';
+
 async function assertFileExists(path: string) {
   return new Promise<void>((resolve, reject) =>
     access(path, constants.F_OK, (error) =>
@@ -49,7 +51,7 @@ function processBundleBudgets() {
   return bundleBudgets;
 }
 
-async function run() {
+export async function run() {
   try {
     if (github.context.eventName !== 'pull_request') {
       throw new Error(
@@ -140,8 +142,6 @@ async function run() {
     if (artifacts.status !== 200) {
       throw new Error(`Failed to retrieve artifacts for run ${runId}.`);
     }
-
-    console.log(JSON.stringify(artifacts.data, null, 2));
 
     const paths = {
       base: {
@@ -323,12 +323,33 @@ async function run() {
       ].join('\n');
     }
 
-    await octokit.rest.issues.createComment({
+    const commentBody = body + COMMENT_IDENTIFIER;
+
+    const comments = await octokit.rest.issues.listComments({
       owner,
       repo,
       issue_number: pullRequestId,
-      body,
     });
+
+    const existingComment = comments.data.find(comment => 
+      comment.body?.endsWith(COMMENT_IDENTIFIER)
+    );
+
+    if (existingComment) {
+      await octokit.rest.issues.updateComment({
+        owner,
+        repo,
+        comment_id: existingComment.id,
+        body: commentBody,
+      });
+    } else {
+      await octokit.rest.issues.createComment({
+        owner,
+        repo,
+        issue_number: pullRequestId,
+        body: commentBody,
+      });
+    }
 
     if (diff.chunks.violations.length === 0) {
       const violationlabels = await octokit.rest.issues.listLabelsOnIssue({
