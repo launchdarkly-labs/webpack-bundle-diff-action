@@ -331,8 +331,8 @@ export async function run() {
       issue_number: pullRequestId,
     });
 
-    const existingComment = comments.data.find(comment => 
-      comment.body?.endsWith(COMMENT_IDENTIFIER)
+    const existingComment = comments.data.find(
+      (comment) => comment.body?.endsWith(COMMENT_IDENTIFIER),
     );
 
     if (existingComment) {

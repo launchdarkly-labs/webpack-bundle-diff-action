@@ -15,27 +15,31 @@ jest.mock('fs', () => ({
   constants: { F_OK: 0 },
   promises: {
     access: jest.fn().mockResolvedValue(undefined),
-  }
+  },
 }));
 
 // Mock report data to match the actual file structure
-const mockReportData = [{
-  label: "common.398d730bb297033ed400.js",
-  isAsset: true,
-  statSize: 2008121,
-  parsedSize: 863938,
-  gzipSize: 230213,
-  groups: []  // Simplified for test
-}];
+const mockReportData = [
+  {
+    label: 'common.398d730bb297033ed400.js',
+    isAsset: true,
+    statSize: 2008121,
+    parsedSize: 863938,
+    gzipSize: 230213,
+    groups: [], // Simplified for test
+  },
+];
 
-const mockLargerReportData = [{
-  label: "common.90aad3b1c5894fb1dce5.js",
-  isAsset: true,
-  statSize: 2008121,
-  parsedSize: 863938,
-  gzipSize: 230213,
-  groups: []  // Simplified for test
-}];
+const mockLargerReportData = [
+  {
+    label: 'common.90aad3b1c5894fb1dce5.js',
+    isAsset: true,
+    statSize: 2008121,
+    parsedSize: 863938,
+    gzipSize: 230213,
+    groups: [], // Simplified for test
+  },
+];
 
 describe('bundle analysis action', () => {
   let mockAddLabels: jest.Mock;
@@ -120,8 +124,10 @@ describe('bundle analysis action', () => {
         'increase-label': 'size-increase',
         'decrease-label': 'size-decrease',
         'violation-label': 'size-violation',
-        'base-bundle-analysis-report-path': '../violation-base-webpack-bundle-analyzer-report.json',
-        'head-bundle-analysis-report-path': '../violation-head-webpack-bundle-analyzer-report.json',
+        'base-bundle-analysis-report-path':
+          '../violation-base-webpack-bundle-analyzer-report.json',
+        'head-bundle-analysis-report-path':
+          '../violation-head-webpack-bundle-analyzer-report.json',
         'github-token': 'fake-token',
         'should-block-pr-on-exceeded-budget': 'false',
       };
@@ -129,8 +135,16 @@ describe('bundle analysis action', () => {
     });
 
     // Mock the report files with correct paths
-    jest.mock('../violation-base-webpack-bundle-analyzer-report.json', () => mockReportData, { virtual: true });
-    jest.mock('../violation-head-webpack-bundle-analyzer-report.json', () => mockLargerReportData, { virtual: true });
+    jest.mock(
+      '../violation-base-webpack-bundle-analyzer-report.json',
+      () => mockReportData,
+      { virtual: true },
+    );
+    jest.mock(
+      '../violation-head-webpack-bundle-analyzer-report.json',
+      () => mockLargerReportData,
+      { virtual: true },
+    );
 
     // Simplify core mocks to just be empty functions
     (core.info as jest.Mock).mockImplementation(() => {});
@@ -151,18 +165,22 @@ describe('bundle analysis action', () => {
 
   it('updates existing comment when bundle analysis comment exists', async () => {
     mockListComments.mockResolvedValue({
-      data: [{ 
-        id: 789,
-        body: 'old analysis\n\n<!-- bundle-analysis-comment -->' 
-      }],
+      data: [
+        {
+          id: 789,
+          body: 'old analysis\n\n<!-- bundle-analysis-comment -->',
+        },
+      ],
     });
 
     await run();
 
     expect(mockCreateComment).not.toHaveBeenCalled();
     expect(mockUpdateComment).toHaveBeenCalledTimes(1);
-    expect(mockUpdateComment).toHaveBeenCalledWith(expect.objectContaining({
-      comment_id: 789,
-    }));
+    expect(mockUpdateComment).toHaveBeenCalledWith(
+      expect.objectContaining({
+        comment_id: 789,
+      }),
+    );
   });
-}); 
+});
