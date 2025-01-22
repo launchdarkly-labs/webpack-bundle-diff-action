@@ -7,10 +7,9 @@ const sortedColumn = (name: string) => `${name} ▾`;
 const deltaDescending = (a: AssetDiff, b: AssetDiff) =>
   Math.abs(b.delta) - Math.abs(a.delta);
 
-const sizeDescending = (version: 'headSize' | 'baseSize') => (
-  a: AssetDiff,
-  b: AssetDiff,
-) => b[version] - a[version];
+const sizeDescending =
+  (version: 'headSize' | 'baseSize') => (a: AssetDiff, b: AssetDiff) =>
+    b[version] - a[version];
 
 const md = {
   emphasis: (s: string) => `**${s}**`,

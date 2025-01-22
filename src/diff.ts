@@ -36,7 +36,8 @@ export type Diff = {
 
 export type BundleBudget = { name: string; budget: number };
 
-const ASSET_NAME_REGEXP = /^(?<assetname>[a-zA-Z0-9\.\-_]+)\.([a-zA-Z0-9]{20})\.(?<extension>js|css)$/;
+const ASSET_NAME_REGEXP =
+  /^(?<assetname>[a-zA-Z0-9\.\-_]+)\.([a-zA-Z0-9]{20})\.(?<extension>js|css)$/;
 
 const parseAssetName = (name: string) => {
   const match = name.match(ASSET_NAME_REGEXP);
