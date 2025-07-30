@@ -46,7 +46,7 @@ const SIMPLE_ASSET_NAME_REGEXP =
 export const parseAssetName = (name: string) => {
   // First try the hash-based pattern
   let match = name.match(ASSET_NAME_REGEXP);
-  
+
   if (!match || !match.groups) {
     // Try the simple pattern without hash
     match = name.match(SIMPLE_ASSET_NAME_REGEXP);
@@ -57,7 +57,7 @@ export const parseAssetName = (name: string) => {
   }
 
   const canonicalName = `${match.groups.assetname}.${match.groups.extension}`;
-  
+
   return {
     ...match.groups,
     canonicalName,
@@ -74,17 +74,22 @@ export function getDiff(
     bundleBudgets,
   }: { diffThreshold: number; bundleBudgets?: BundleBudget[] },
 ): Diff {
-  const processReportItems = (report: BundleAnalyzerPlugin.JsonReport, label: string) => {
+  const processReportItems = (
+    report: BundleAnalyzerPlugin.JsonReport,
+    label: string,
+  ) => {
     const processed = report
       .map((item) => {
         if (!item.isAsset) {
           return [];
         }
-        
+
         const parsed = parseAssetName(item.label);
 
         if (!parsed) {
-          console.warn(`Skipping unparseable asset in ${label}: "${item.label}"`);
+          console.warn(
+            `Skipping unparseable asset in ${label}: "${item.label}"`,
+          );
           return [];
         }
 
