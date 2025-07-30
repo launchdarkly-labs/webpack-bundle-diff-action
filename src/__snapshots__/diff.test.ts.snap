@@ -25,8 +25,8 @@ Here's a breakdown of the number of bytes our customers will need to download on
 | Invalidated        |    \`196 kB\` |                       \`2%\` |
 | Added              |      \`0 kB\` |                       \`0%\` |
 | **Total uncached** |    \`196 kB\` |                       \`2%\` |
-| **Total cached**   | \`10,849 kB\` |                      \`98%\` |
-| **Total**          | \`11,045 kB\` |                     \`100%\` |
+| **Total cached**   | \`10,954 kB\` |                      \`98%\` |
+| **Total**          | \`11,149 kB\` |                     \`100%\` |
 
 
 ℹ️ Lower is better."
@@ -45,12 +45,10 @@ exports[`removed diff 1`] = `
 | :---- | -----: |"
 `;
 
-exports[`render bundle budget violation section 1`] = `
+exports[`render violations table 1`] = `
 "
-  #### ❌❌❌❌❌❌❌❌❌❌ 1 bundle violated budgets ❌❌❌❌❌❌❌❌❌❌
-  | Asset                   | Base size | Head size | Delta ▾ | Delta % | Budget |
-| :---------------------- | --------: | --------: | ------: | ------: | ------ |
-| \`DashboardContainer.js\` |  \`102 kB\` |  \`122 kB\` | \`20 kB\` |   \`19%\` | \`10%\`  |
+  
+  
 "
 `;
 
@@ -79,126 +77,127 @@ exports[`summary 1`] = `
 exports[`total downloaded bytes diff 1`] = `
 "|           | Total downloaded |
 | --------- | ---------------- |
-| Base      | 11,050 kB        |
-| Head      | 11,045 kB        |
+| Base      | 11,154 kB        |
+| Head      | 11,149 kB        |
 | **Delta** | \`-5 kB\`          |"
 `;
 
 exports[`unchanged diff 1`] = `
-"| Asset                                      |   Size ▾ |
-| :----------------------------------------- | -------: |
-| common.js                                  | 1,133 kB |
-| app.js                                     |   527 kB |
-| unauthenticated.js                         |   497 kB |
-| ManageFlagTargetingContainer.js            |   470 kB |
-| TimeSeriesComponent.js                     |   391 kB |
-| TutorialContainer.js                       |   353 kB |
-| framework.js                               |   320 kB |
-| FlagToggleConfirmationContainer.js         |   295 kB |
-| FlagComparisonContainer.js                 |   275 kB |
-| SDKReference.js                            |   247 kB |
-| SegmentTargetingContainer.js               |   246 kB |
-| pubnub.js                                  |   240 kB |
-| newHires.js                                |   231 kB |
-| codemirror.js                              |   226 kB |
-| WorkflowBuilderContainer.js                |   220 kB |
-| ManageMembersContainer.js                  |   207 kB |
-| ManageAuthorization.js                     |   196 kB |
-| ManageUserContainer.js                     |   195 kB |
-| FlagExperimentsContainer.js                |   177 kB |
-| ManageBilling.js                           |   174 kB |
-| DashboardContainer.js                      |   165 kB |
-| ApprovalRequestContainer.js                |   162 kB |
-| EnvironmentSwitcherContent.js              |   158 kB |
-| ManageProjects.js                          |   147 kB |
-| UsageContainer.js                          |   143 kB |
-| CommandBarLoader.js                        |   134 kB |
-| ManageProfileContainer.js                  |   130 kB |
-| integrations.entry.js                      |   128 kB |
-| UserConsoleContainer.js                    |   123 kB |
-| CustomWorkflowsContainer.js                |   120 kB |
-| ManageFlagSettingsContainer.js             |   103 kB |
-| ManageRolesContainer.js                    |    98 kB |
-| metrics.entry.js                           |    97 kB |
-| FlagCodeReferenceListContainer.js          |    93 kB |
-| GetStarted.js                              |    91 kB |
-| GoaltenderSubscriptionEditorContainer.js   |    89 kB |
-| GoaltenderSubscriptionCreator.js           |    82 kB |
-| FlagInsightsContainer.js                   |    81 kB |
-| RacListContainer.js                        |    79 kB |
-| sortable-dynamic.js                        |    73 kB |
-| GlobalHotKeysContainer.js                  |    72 kB |
-| experimentation.entry.js                   |    72 kB |
-| AuditLogItemViewerContainer.js             |    68 kB |
-| NotificationCenterContainer.js             |    67 kB |
-| WebhookEditorContainer.js                  |    65 kB |
-| HotKeys.js                                 |    65 kB |
-| CreateOrJoinContainer.js                   |    64 kB |
-| ManageSecurityContainer.js                 |    63 kB |
-| SlackIncomingHookEditorContainer.js        |    61 kB |
-| WebhookCreator.js                          |    60 kB |
-| DateRangePickerComponent.js                |    59 kB |
-| DatePickerComponent.js                     |    56 kB |
-| SegmentHistoryContainer.js                 |    56 kB |
-| auditLog.entry.js                          |    56 kB |
-| FlagCreatorContainer.js                    |    55 kB |
-| FlagHistoryContainer.js                    |    55 kB |
-| SlackIncomingHookCreator.js                |    55 kB |
-| ManageTeamContainer.js                     |    53 kB |
-| eventDebugger.entry.js                     |    50 kB |
-| GoaltenderSubscriptionErrorLogContainer.js |    50 kB |
-| CustomerLogoGrid.js                        |    45 kB |
-| metricsDetails.js                          |    43 kB |
-| RuleExclusionContainer.js                  |    43 kB |
-| DestinationEditorContainer.js              |    40 kB |
-| AcceptInvitation.js                        |    37 kB |
-| ManageFlagVariationsContainer.js           |    37 kB |
-| ArchiveFlagPanelContainer.js               |    36 kB |
-| DestinationCreator.js                      |    34 kB |
-| FlagEventsContainer.js                     |    34 kB |
-| UserEventsContainer.js                     |    34 kB |
-| AppBannerContainer.js                      |    33 kB |
-| PendingChangesDrawerContainer.js           |    33 kB |
-| ManageTeamsContainer.js                    |    28 kB |
-| GoalEventsContainer.js                     |    27 kB |
-| SegmentSettings.js                         |    24 kB |
-| login.entry.js                             |    23 kB |
-| ManageFlagContainer.js                     |    22 kB |
-| segments.entry.js                          |    21 kB |
-| ManageTeamSettingsContainer.js             |    21 kB |
-| SegmentsHomeContainer.js                   |    21 kB |
-| RepositoryEditorContainer.js               |    21 kB |
-| ConnectFlagContainer.js                    |    19 kB |
-| runtime.js                                 |    17 kB |
-| oauthProviderConfig.entry.js               |    17 kB |
-| PasswordContainer.js                       |    17 kB |
-| EventDetailContainer.js                    |    15 kB |
-| SegmentCreator.js                          |    15 kB |
-| oauth2Authorize.entry.js                   |    15 kB |
-| accountSettings.entry.js                   |    13 kB |
-| ExternalReferenceListContainer.js          |    11 kB |
-| InAppDemoCardContainer.js                  |    11 kB |
-| SegmentDetailsContainer.js                 |    11 kB |
-| ManageMemberContainer.js                   |    11 kB |
-| ForgotPasswordContainer.js                 |    10 kB |
-| QuickstartHomeContainer.js                 |     9 kB |
-| GoaltenderSubscriptionLearnMoreDrawer.js   |     9 kB |
-| ContactUs.js                               |     8 kB |
-| FlagAcrossEnvironmentsContainer.js         |     8 kB |
-| EnvironmentSwitcher.js                     |     8 kB |
-| VerifyMFA.js                               |     8 kB |
-| newHires.entry.js                          |     6 kB |
-| SetupABTesting.js                          |     5 kB |
-| flags.entry.js                             |     5 kB |
-| AccountImpersonationContainer.js           |     5 kB |
-| RulesOfBehavior.js                         |     4 kB |
-| UpsellFeatureBannerRelayProxy.js           |     4 kB |
-| UpsellFeatureBannerCustomRoles.js          |     4 kB |
-| EmailVerificationContainer.js              |     2 kB |
-| SubscriptionCTA.js                         |     2 kB |
-| quickstart.entry.js                        |     2 kB |
-| users.entry.js                             |     2 kB |
-| getstarted.entry.js                        |     1 kB |
-| UpsellFeatureBannerExperiments.js          |     1 kB |
-| errorPage.js                               |     0 kB |"
+"| Asset                                        |   Size ▾ |
+| :------------------------------------------- | -------: |
+| common.js                                    | 1,133 kB |
+| app.js                                       |   527 kB |
+| unauthenticated.js                           |   497 kB |
+| ManageFlagTargetingContainer.js              |   470 kB |
+| TimeSeriesComponent.js                       |   391 kB |
+| TutorialContainer.js                         |   353 kB |
+| framework.js                                 |   320 kB |
+| FlagToggleConfirmationContainer.js           |   295 kB |
+| FlagComparisonContainer.js                   |   275 kB |
+| SDKReference.js                              |   247 kB |
+| SegmentTargetingContainer.js                 |   246 kB |
+| pubnub.js                                    |   240 kB |
+| newHires.js                                  |   231 kB |
+| codemirror.js                                |   226 kB |
+| WorkflowBuilderContainer.js                  |   220 kB |
+| ManageMembersContainer.js                    |   207 kB |
+| ManageAuthorization.js                       |   196 kB |
+| ManageUserContainer.js                       |   195 kB |
+| FlagExperimentsContainer.js                  |   177 kB |
+| ManageBilling.js                             |   174 kB |
+| DashboardContainer.js                        |   165 kB |
+| ApprovalRequestContainer.js                  |   162 kB |
+| EnvironmentSwitcherContent.js                |   158 kB |
+| ManageProjects.js                            |   147 kB |
+| UsageContainer.js                            |   143 kB |
+| CommandBarLoader.js                          |   134 kB |
+| ManageProfileContainer.js                    |   130 kB |
+| integrations.entry.js                        |   128 kB |
+| UserConsoleContainer.js                      |   123 kB |
+| CustomWorkflowsContainer.js                  |   120 kB |
+| searchService.worker.a50d2fcb27b3eea710e1.js |   104 kB |
+| ManageFlagSettingsContainer.js               |   103 kB |
+| ManageRolesContainer.js                      |    98 kB |
+| metrics.entry.js                             |    97 kB |
+| FlagCodeReferenceListContainer.js            |    93 kB |
+| GetStarted.js                                |    91 kB |
+| GoaltenderSubscriptionEditorContainer.js     |    89 kB |
+| GoaltenderSubscriptionCreator.js             |    82 kB |
+| FlagInsightsContainer.js                     |    81 kB |
+| RacListContainer.js                          |    79 kB |
+| sortable-dynamic.js                          |    73 kB |
+| GlobalHotKeysContainer.js                    |    72 kB |
+| experimentation.entry.js                     |    72 kB |
+| AuditLogItemViewerContainer.js               |    68 kB |
+| NotificationCenterContainer.js               |    67 kB |
+| WebhookEditorContainer.js                    |    65 kB |
+| HotKeys.js                                   |    65 kB |
+| CreateOrJoinContainer.js                     |    64 kB |
+| ManageSecurityContainer.js                   |    63 kB |
+| SlackIncomingHookEditorContainer.js          |    61 kB |
+| WebhookCreator.js                            |    60 kB |
+| DateRangePickerComponent.js                  |    59 kB |
+| DatePickerComponent.js                       |    56 kB |
+| SegmentHistoryContainer.js                   |    56 kB |
+| auditLog.entry.js                            |    56 kB |
+| FlagCreatorContainer.js                      |    55 kB |
+| FlagHistoryContainer.js                      |    55 kB |
+| SlackIncomingHookCreator.js                  |    55 kB |
+| ManageTeamContainer.js                       |    53 kB |
+| eventDebugger.entry.js                       |    50 kB |
+| GoaltenderSubscriptionErrorLogContainer.js   |    50 kB |
+| CustomerLogoGrid.js                          |    45 kB |
+| metricsDetails.js                            |    43 kB |
+| RuleExclusionContainer.js                    |    43 kB |
+| DestinationEditorContainer.js                |    40 kB |
+| AcceptInvitation.js                          |    37 kB |
+| ManageFlagVariationsContainer.js             |    37 kB |
+| ArchiveFlagPanelContainer.js                 |    36 kB |
+| DestinationCreator.js                        |    34 kB |
+| FlagEventsContainer.js                       |    34 kB |
+| UserEventsContainer.js                       |    34 kB |
+| AppBannerContainer.js                        |    33 kB |
+| PendingChangesDrawerContainer.js             |    33 kB |
+| ManageTeamsContainer.js                      |    28 kB |
+| GoalEventsContainer.js                       |    27 kB |
+| SegmentSettings.js                           |    24 kB |
+| login.entry.js                               |    23 kB |
+| ManageFlagContainer.js                       |    22 kB |
+| segments.entry.js                            |    21 kB |
+| ManageTeamSettingsContainer.js               |    21 kB |
+| SegmentsHomeContainer.js                     |    21 kB |
+| RepositoryEditorContainer.js                 |    21 kB |
+| ConnectFlagContainer.js                      |    19 kB |
+| runtime.js                                   |    17 kB |
+| oauthProviderConfig.entry.js                 |    17 kB |
+| PasswordContainer.js                         |    17 kB |
+| EventDetailContainer.js                      |    15 kB |
+| SegmentCreator.js                            |    15 kB |
+| oauth2Authorize.entry.js                     |    15 kB |
+| accountSettings.entry.js                     |    13 kB |
+| ExternalReferenceListContainer.js            |    11 kB |
+| InAppDemoCardContainer.js                    |    11 kB |
+| SegmentDetailsContainer.js                   |    11 kB |
+| ManageMemberContainer.js                     |    11 kB |
+| ForgotPasswordContainer.js                   |    10 kB |
+| QuickstartHomeContainer.js                   |     9 kB |
+| GoaltenderSubscriptionLearnMoreDrawer.js     |     9 kB |
+| ContactUs.js                                 |     8 kB |
+| FlagAcrossEnvironmentsContainer.js           |     8 kB |
+| EnvironmentSwitcher.js                       |     8 kB |
+| VerifyMFA.js                                 |     8 kB |
+| newHires.entry.js                            |     6 kB |
+| SetupABTesting.js                            |     5 kB |
+| flags.entry.js                               |     5 kB |
+| AccountImpersonationContainer.js             |     5 kB |
+| RulesOfBehavior.js                           |     4 kB |
+| UpsellFeatureBannerRelayProxy.js             |     4 kB |
+| UpsellFeatureBannerCustomRoles.js            |     4 kB |
+| EmailVerificationContainer.js                |     2 kB |
+| SubscriptionCTA.js                           |     2 kB |
+| quickstart.entry.js                          |     2 kB |
+| users.entry.js                               |     2 kB |
+| getstarted.entry.js                          |     1 kB |
+| UpsellFeatureBannerExperiments.js            |     1 kB |
+| errorPage.js                                 |     0 kB |"
 `;
