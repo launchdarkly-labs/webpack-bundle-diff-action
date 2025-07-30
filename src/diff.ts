@@ -37,18 +37,30 @@ export type Diff = {
 export type BundleBudget = { name: string; budget: number };
 
 const ASSET_NAME_REGEXP =
-  /^(?<assetname>[a-zA-Z0-9\.\-_]+)\.([a-zA-Z0-9]{20})\.(?<extension>js|css)$/;
+  /^(?<assetname>[a-zA-Z0-9\.\-_]+)\.([a-zA-Z0-9]{6,32})\.(?<extension>js|css)$/;
 
-const parseAssetName = (name: string) => {
-  const match = name.match(ASSET_NAME_REGEXP);
+// Fallback regex for assets without hashes (e.g., vendor.js, main.css)
+const SIMPLE_ASSET_NAME_REGEXP =
+  /^(?<assetname>[a-zA-Z0-9\.\-_]+)\.(?<extension>js|css)$/;
+
+export const parseAssetName = (name: string) => {
+  // First try the hash-based pattern
+  let match = name.match(ASSET_NAME_REGEXP);
+  
+  if (!match || !match.groups) {
+    // Try the simple pattern without hash
+    match = name.match(SIMPLE_ASSET_NAME_REGEXP);
+  }
 
   if (!match || !match.groups) {
     return;
   }
 
+  const canonicalName = `${match.groups.assetname}.${match.groups.extension}`;
+  
   return {
     ...match.groups,
-    canonicalName: `${match.groups.assetname}.${match.groups.extension}`,
+    canonicalName,
   };
 };
 
@@ -62,54 +74,42 @@ export function getDiff(
     bundleBudgets,
   }: { diffThreshold: number; bundleBudgets?: BundleBudget[] },
 ): Diff {
+  const processReportItems = (report: BundleAnalyzerPlugin.JsonReport, label: string) => {
+    const processed = report
+      .map((item) => {
+        if (!item.isAsset) {
+          return [];
+        }
+        
+        const parsed = parseAssetName(item.label);
+
+        if (!parsed) {
+          console.warn(`Skipping unparseable asset in ${label}: "${item.label}"`);
+          return [];
+        }
+
+        return [
+          parsed.canonicalName,
+          {
+            name: parsed.canonicalName,
+            gzipSize: item.gzipSize,
+            statSize: item.statSize,
+            parsedSize: item.parsedSize,
+          },
+        ];
+      })
+      // filter out assets that didn't match for some reason
+      .filter((entry) => entry.length !== 0);
+
+    return processed;
+  };
+
   const byName: {
     base: Record<string, FunkyAsset>;
     head: Record<string, FunkyAsset>;
   } = {
-    base: Object.fromEntries(
-      analysis.base.report
-        .map((item) => {
-          const parsed = parseAssetName(item.label);
-
-          if (!item.isAsset || !parsed) {
-            return [];
-          }
-
-          return [
-            parsed.canonicalName,
-            {
-              name: parsed.canonicalName,
-              gzipSize: item.gzipSize,
-              statSize: item.statSize,
-              parsedSize: item.parsedSize,
-            },
-          ];
-        })
-        // filter out assets that didn't match for some reason
-        .filter((entry) => entry.length !== 0),
-    ),
-    head: Object.fromEntries(
-      analysis.head.report
-        .map((item) => {
-          const parsed = parseAssetName(item.label);
-
-          if (!item.isAsset || !parsed) {
-            return [];
-          }
-
-          return [
-            parsed.canonicalName,
-            {
-              name: parsed.canonicalName,
-              gzipSize: item.gzipSize,
-              statSize: item.statSize,
-              parsedSize: item.parsedSize,
-            },
-          ];
-        })
-        // filter out assets that didn't match for some reason
-        .filter((entry) => entry.length !== 0),
-    ),
+    base: Object.fromEntries(processReportItems(analysis.base.report, 'base')),
+    head: Object.fromEntries(processReportItems(analysis.head.report, 'head')),
   };
 
   let diff: Diff = {

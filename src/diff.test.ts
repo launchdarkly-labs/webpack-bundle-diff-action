@@ -1,4 +1,4 @@
-import { getDiff } from './diff';
+import { getDiff, parseAssetName } from './diff';
 import {
   renderTotalDownloadedBytesTable,
   renderLongTermCachingSummary,
@@ -53,11 +53,11 @@ const violationDiff = getDiff(
   },
   {
     diffThreshold: 0.05,
-    bundleBudgets: [{ name: 'DashboardContainer.js', budget: 10 }],
+    bundleBudgets: [{ name: 'common.js', budget: 10 }],
   },
 );
 
-test('render bundle budget violation section', () => {
+test('render violations table', () => {
   expect(
     renderViolationSection({
       title: `❌❌❌❌❌❌❌❌❌❌ ${
@@ -73,6 +73,49 @@ test('render bundle budget violation section', () => {
       }),
     }),
   ).toMatchSnapshot();
+});
+
+
+
+// Test asset name parsing with various filename patterns
+test('asset name parsing with various patterns', () => {
+  
+  // Test different hash lengths (common in RSPack)
+  expect(parseAssetName('main.abcd1234.js')).toEqual({
+    assetname: 'main',
+    extension: 'js',
+    canonicalName: 'main.js'
+  });
+  
+  expect(parseAssetName('vendor.abcdef123456.js')).toEqual({
+    assetname: 'vendor',
+    extension: 'js',
+    canonicalName: 'vendor.js'
+  });
+  
+  expect(parseAssetName('chunk-common.abcdef1234567890abcdef12.js')).toEqual({
+    assetname: 'chunk-common',
+    extension: 'js',
+    canonicalName: 'chunk-common.js'
+  });
+
+  // Test assets without hashes
+  expect(parseAssetName('runtime.js')).toEqual({
+    assetname: 'runtime',
+    extension: 'js',
+    canonicalName: 'runtime.js'
+  });
+
+  // Test additional file extensions (with hash)
+  expect(parseAssetName('styles.abc123.css')).toEqual({
+    assetname: 'styles',
+    extension: 'css',
+    canonicalName: 'styles.css'
+  });
+
+  // Test invalid patterns should return undefined
+  expect(parseAssetName('invalid-asset-name')).toBeUndefined();
+  expect(parseAssetName('asset.hash')).toBeUndefined(); // no extension
 });
 
 test('empty section', () => {
