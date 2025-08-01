@@ -218,12 +218,6 @@ export function renderLongTermCachingSummary({ diff }: { diff: Diff }) {
       .map((asset) => asset.headSize)
       .reduce((total, size) => total + size, 0);
 
-  console.log(
-    diff.chunks.negligible.filter((a) =>
-      a.name.includes('ManageAuthorization'),
-    ),
-  );
-
   const addedCount = diff.chunks.added.length;
   const addedBytes = diff.chunks.added
     .map((asset) => asset.headSize)
