@@ -1,0 +1,92 @@
+name: 'Webpack Bundle Diff (Dogfooding)'
+on:
+  pull_request:
+    paths:
+      - 'src/**'
+      - 'test-project/**'
+      - 'webpack.config.js'
+      - 'package.json'
+      - 'package-lock.json'
+
+jobs:
+  build-head:
+    name: 'Build head branch'
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v4
+    - name: Setup Node.js
+      uses: actions/setup-node@v4
+      with:
+        node-version: '18'
+        cache: 'npm'
+    - name: Install dependencies
+      run: npm ci
+    - name: Generate webpack stats for head
+      run: npm run webpack:stats
+    - name: Upload head bundle analysis
+      uses: actions/upload-artifact@v4
+      with:
+        name: head-stats
+        path: ./test-dist/webpack-*.json
+        if-no-files-found: error
+        retention-days: 1
+
+  build-base:
+    name: 'Build base branch'
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v4
+      with:
+        ref: ${{ github.base_ref }}
+    - name: Setup Node.js
+      uses: actions/setup-node@v4
+      with:
+        node-version: '18'
+        cache: 'npm'
+    - name: Install dependencies
+      run: npm ci
+    - name: Generate webpack stats for base
+      run: npm run webpack:stats
+    - name: Upload base bundle analysis
+      uses: actions/upload-artifact@v4
+      with:
+        name: base-stats
+        path: ./test-dist/webpack-*.json
+        if-no-files-found: error
+        retention-days: 1
+
+  compare:
+    name: 'Compare base & head bundle sizes'
+    runs-on: ubuntu-latest
+    needs: [build-base, build-head]
+    steps:
+    - uses: actions/checkout@v4
+    - name: Setup Node.js
+      uses: actions/setup-node@v4
+      with:
+        node-version: '18'
+        cache: 'npm'
+    - name: Install dependencies (for building action)
+      run: npm ci
+    - name: Build action
+      run: npm run build && npm run package
+    - name: Download base analysis artifacts
+      uses: actions/download-artifact@v4
+      with:
+        name: base-stats
+        path: base-stats
+    - name: Download head analysis artifacts
+      uses: actions/download-artifact@v4
+      with:
+        name: head-stats
+        path: head-stats
+    - name: Run bundle diff action (dogfooding!)
+      uses: ./
+      with:
+        github-token: ${{ secrets.GITHUB_TOKEN }}
+        base-bundle-analysis-report-path: ./base-stats/webpack-bundle-analyzer-report.json
+        head-bundle-analysis-report-path: ./head-stats/webpack-bundle-analyzer-report.json
+        diff-threshold: '0.02'
+        increase-label: '📈 bundle increase'
+        decrease-label: '📉 bundle decrease'
+        violation-label: '🚨 bundle budget violation'
