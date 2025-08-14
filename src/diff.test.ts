@@ -182,13 +182,15 @@ test('affectsLongTermCaching', () => {
   // Should return true when there are changes that affect caching
   const diffWithChanges = {
     chunks: {
-      bigger: [{
-        name: 'main.js',
-        baseSize: 100000,
-        headSize: 101000,
-        delta: 1000,
-        ratio: 0.01,
-      }],
+      bigger: [
+        {
+          name: 'main.js',
+          baseSize: 100000,
+          headSize: 101000,
+          delta: 1000,
+          ratio: 0.01,
+        },
+      ],
       smaller: [],
       added: [],
       removed: [],
@@ -248,37 +250,51 @@ describe('getDiff function edge cases', () => {
   test('should handle different threshold values', () => {
     const result1 = getDiff(
       {
-        base: { report: require('../base-webpack-bundle-analyzer-report.json') },
-        head: { report: require('../head-webpack-bundle-analyzer-report.json') },
+        base: {
+          report: require('../base-webpack-bundle-analyzer-report.json'),
+        },
+        head: {
+          report: require('../head-webpack-bundle-analyzer-report.json'),
+        },
       },
-      { diffThreshold: 0.001 } // Very low threshold
+      { diffThreshold: 0.001 }, // Very low threshold
     );
-    
+
     const result2 = getDiff(
       {
-        base: { report: require('../base-webpack-bundle-analyzer-report.json') },
-        head: { report: require('../head-webpack-bundle-analyzer-report.json') },
+        base: {
+          report: require('../base-webpack-bundle-analyzer-report.json'),
+        },
+        head: {
+          report: require('../head-webpack-bundle-analyzer-report.json'),
+        },
       },
-      { diffThreshold: 0.5 } // Very high threshold
+      { diffThreshold: 0.5 }, // Very high threshold
     );
 
     // Lower threshold should result in fewer negligible changes
-    expect(result1.chunks.negligible.length).toBeLessThanOrEqual(result2.chunks.negligible.length);
+    expect(result1.chunks.negligible.length).toBeLessThanOrEqual(
+      result2.chunks.negligible.length,
+    );
   });
 
   test('should handle budget violations with existing data', () => {
     const result = getDiff(
       {
-        base: { report: require('../violation-base-webpack-bundle-analyzer-report.json') },
-        head: { report: require('../violation-head-webpack-bundle-analyzer-report.json') },
+        base: {
+          report: require('../violation-base-webpack-bundle-analyzer-report.json'),
+        },
+        head: {
+          report: require('../violation-head-webpack-bundle-analyzer-report.json'),
+        },
       },
-      { 
+      {
         diffThreshold: 0.05,
         bundleBudgets: [
           { name: 'common.js', budget: 10 },
           { name: 'nonexistent.js', budget: 5 }, // Should not cause issues
-        ]
-      }
+        ],
+      },
     );
 
     // Should detect violations from the existing test data
@@ -291,10 +307,14 @@ describe('getDiff function edge cases', () => {
   test('should calculate total bytes from real data', () => {
     const result = getDiff(
       {
-        base: { report: require('../base-webpack-bundle-analyzer-report.json') },
-        head: { report: require('../head-webpack-bundle-analyzer-report.json') },
+        base: {
+          report: require('../base-webpack-bundle-analyzer-report.json'),
+        },
+        head: {
+          report: require('../head-webpack-bundle-analyzer-report.json'),
+        },
       },
-      { diffThreshold: 0.05 }
+      { diffThreshold: 0.05 },
     );
 
     expect(typeof result.totalBytes.base).toBe('number');

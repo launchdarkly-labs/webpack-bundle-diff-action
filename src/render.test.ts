@@ -39,34 +39,42 @@ const mockAssetDiffWithBudget: AssetDiff = {
 const mockDiff: Diff = {
   chunks: {
     bigger: [mockAssetDiff],
-    smaller: [{
-      name: 'vendor.xyz789.js',
-      baseSize: 200000,
-      headSize: 190000,
-      delta: -10000,
-      ratio: -0.05,
-    }],
-    added: [{
-      name: 'new.chunk.js',
-      baseSize: 0,
-      headSize: 50000,
-      delta: 50000,
-      ratio: 1,
-    }],
-    removed: [{
-      name: 'old.chunk.js',
-      baseSize: 30000,
-      headSize: 0,
-      delta: -30000,
-      ratio: -1,
-    }],
-    negligible: [{
-      name: 'unchanged.js',
-      baseSize: 10000,
-      headSize: 10000,
-      delta: 0,
-      ratio: 0,
-    }],
+    smaller: [
+      {
+        name: 'vendor.xyz789.js',
+        baseSize: 200000,
+        headSize: 190000,
+        delta: -10000,
+        ratio: -0.05,
+      },
+    ],
+    added: [
+      {
+        name: 'new.chunk.js',
+        baseSize: 0,
+        headSize: 50000,
+        delta: 50000,
+        ratio: 1,
+      },
+    ],
+    removed: [
+      {
+        name: 'old.chunk.js',
+        baseSize: 30000,
+        headSize: 0,
+        delta: -30000,
+        ratio: -1,
+      },
+    ],
+    negligible: [
+      {
+        name: 'unchanged.js',
+        baseSize: 10000,
+        headSize: 10000,
+        delta: 0,
+        ratio: 0,
+      },
+    ],
     violations: [mockAssetDiffWithBudget],
   },
   totalBytes: {
@@ -86,11 +94,18 @@ describe('render functions', () => {
     });
 
     it('respects minimum fraction digits', () => {
-      expect(formatRatio(0.1234, { minimumFractionDigits: 2, maximumFractionDigits: 2 })).toBe('12.34%');
+      expect(
+        formatRatio(0.1234, {
+          minimumFractionDigits: 2,
+          maximumFractionDigits: 2,
+        }),
+      ).toBe('12.34%');
     });
 
     it('respects maximum fraction digits', () => {
-      expect(formatRatio(0.123456, { maximumFractionDigits: 2 })).toBe('12.35%');
+      expect(formatRatio(0.123456, { maximumFractionDigits: 2 })).toBe(
+        '12.35%',
+      );
     });
   });
 
@@ -216,8 +231,20 @@ Custom empty message
   describe('renderAddedTable', () => {
     it('renders table for added assets', () => {
       const assets = [
-        { name: 'new1.js', baseSize: 0, headSize: 20000, delta: 20000, ratio: 1 },
-        { name: 'new2.js', baseSize: 0, headSize: 10000, delta: 10000, ratio: 1 },
+        {
+          name: 'new1.js',
+          baseSize: 0,
+          headSize: 20000,
+          delta: 20000,
+          ratio: 1,
+        },
+        {
+          name: 'new2.js',
+          baseSize: 0,
+          headSize: 10000,
+          delta: 10000,
+          ratio: 1,
+        },
       ];
       const result = renderAddedTable({ assets });
       expect(result).toContain('| Asset');
@@ -230,9 +257,27 @@ Custom empty message
 
     it('sorts assets by head size descending', () => {
       const assets = [
-        { name: 'small.js', baseSize: 0, headSize: 10000, delta: 10000, ratio: 1 },
-        { name: 'large.js', baseSize: 0, headSize: 50000, delta: 50000, ratio: 1 },
-        { name: 'medium.js', baseSize: 0, headSize: 30000, delta: 30000, ratio: 1 },
+        {
+          name: 'small.js',
+          baseSize: 0,
+          headSize: 10000,
+          delta: 10000,
+          ratio: 1,
+        },
+        {
+          name: 'large.js',
+          baseSize: 0,
+          headSize: 50000,
+          delta: 50000,
+          ratio: 1,
+        },
+        {
+          name: 'medium.js',
+          baseSize: 0,
+          headSize: 30000,
+          delta: 30000,
+          ratio: 1,
+        },
       ];
       const result = renderAddedTable({ assets });
       const lines = result.split('\n');
@@ -246,8 +291,20 @@ Custom empty message
   describe('renderRemovedTable', () => {
     it('renders table for removed assets', () => {
       const assets = [
-        { name: 'old1.js', baseSize: 20000, headSize: 0, delta: -20000, ratio: -1 },
-        { name: 'old2.js', baseSize: 10000, headSize: 0, delta: -10000, ratio: -1 },
+        {
+          name: 'old1.js',
+          baseSize: 20000,
+          headSize: 0,
+          delta: -20000,
+          ratio: -1,
+        },
+        {
+          name: 'old2.js',
+          baseSize: 10000,
+          headSize: 0,
+          delta: -10000,
+          ratio: -1,
+        },
       ];
       const result = renderRemovedTable({ assets });
       expect(result).toContain('| Asset');
@@ -258,8 +315,20 @@ Custom empty message
 
     it('sorts assets by base size descending', () => {
       const assets = [
-        { name: 'small.js', baseSize: 10000, headSize: 0, delta: -10000, ratio: -1 },
-        { name: 'large.js', baseSize: 50000, headSize: 0, delta: -50000, ratio: -1 },
+        {
+          name: 'small.js',
+          baseSize: 10000,
+          headSize: 0,
+          delta: -10000,
+          ratio: -1,
+        },
+        {
+          name: 'large.js',
+          baseSize: 50000,
+          headSize: 0,
+          delta: -50000,
+          ratio: -1,
+        },
       ];
       const result = renderRemovedTable({ assets });
       const lines = result.split('\n');
@@ -330,8 +399,20 @@ Custom empty message
 
     it('sorts assets by delta descending', () => {
       const assets = [
-        { name: 'small.js', baseSize: 10000, headSize: 10100, delta: 100, ratio: 0.01 },
-        { name: 'large.js', baseSize: 10000, headSize: 10500, delta: 500, ratio: 0.05 },
+        {
+          name: 'small.js',
+          baseSize: 10000,
+          headSize: 10100,
+          delta: 100,
+          ratio: 0.01,
+        },
+        {
+          name: 'large.js',
+          baseSize: 10000,
+          headSize: 10500,
+          delta: 500,
+          ratio: 0.05,
+        },
       ];
       const result = renderNegligibleTable({ assets });
       const lines = result.split('\n');
@@ -381,8 +462,20 @@ Custom empty message
   describe('renderUnchangedTable', () => {
     it('renders unchanged assets table', () => {
       const assets = [
-        { name: 'unchanged1.js', baseSize: 20000, headSize: 20000, delta: 0, ratio: 0 },
-        { name: 'unchanged2.js', baseSize: 10000, headSize: 10000, delta: 0, ratio: 0 },
+        {
+          name: 'unchanged1.js',
+          baseSize: 20000,
+          headSize: 20000,
+          delta: 0,
+          ratio: 0,
+        },
+        {
+          name: 'unchanged2.js',
+          baseSize: 10000,
+          headSize: 10000,
+          delta: 0,
+          ratio: 0,
+        },
       ];
       const result = renderUnchangedTable({ assets });
       expect(result).toContain('unchanged1.js'); // No backticks for unchanged table
@@ -393,8 +486,20 @@ Custom empty message
 
     it('sorts by base size descending', () => {
       const assets = [
-        { name: 'small.js', baseSize: 10000, headSize: 10000, delta: 0, ratio: 0 },
-        { name: 'large.js', baseSize: 50000, headSize: 50000, delta: 0, ratio: 0 },
+        {
+          name: 'small.js',
+          baseSize: 10000,
+          headSize: 10000,
+          delta: 0,
+          ratio: 0,
+        },
+        {
+          name: 'large.js',
+          baseSize: 50000,
+          headSize: 50000,
+          delta: 0,
+          ratio: 0,
+        },
       ];
       const result = renderUnchangedTable({ assets });
       const lines = result.split('\n');
@@ -429,9 +534,14 @@ Custom empty message
 
   describe('renderGithubCompareLink', () => {
     it('renders compare link with short SHAs', () => {
-      const result = renderGithubCompareLink('abcdef1234567890', '1234567890abcdef');
+      const result = renderGithubCompareLink(
+        'abcdef1234567890',
+        '1234567890abcdef',
+      );
       expect(result).toContain('[abcdef123…123456789]');
-      expect(result).toContain('https://github.com/launchdarkly/gonfalon/compare/abcdef1234567890...1234567890abcdef');
+      expect(result).toContain(
+        'https://github.com/launchdarkly/gonfalon/compare/abcdef1234567890...1234567890abcdef',
+      );
       expect(result).toContain('Compare the head branch sha');
     });
   });
@@ -445,7 +555,9 @@ Custom empty message
       });
       expect(result).toContain('_Add new feature');
       expect(result).toContain('[abcdef123]');
-      expect(result).toContain('https://github.com/launchdarkly/gonfalon/pull/123/commits/abcdef1234567890');
+      expect(result).toContain(
+        'https://github.com/launchdarkly/gonfalon/pull/123/commits/abcdef1234567890',
+      );
     });
   });
 

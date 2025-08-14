@@ -54,7 +54,7 @@ describe('assertFileExists', () => {
     });
 
     await expect(assertFileExists('/mock/path')).resolves.toBeUndefined();
-    
+
     mockAccess.mockRestore();
   });
 
@@ -73,8 +73,10 @@ describe('assertFileExists', () => {
       callback(new Error('File not found'));
     });
 
-    await expect(assertFileExists('/nonexistent/path')).rejects.toThrow('/nonexistent/path does not exist');
-    
+    await expect(assertFileExists('/nonexistent/path')).rejects.toThrow(
+      '/nonexistent/path does not exist',
+    );
+
     mockAccess.mockRestore();
   });
 });
@@ -92,7 +94,7 @@ describe('frontend change detection', () => {
       'config.json',
     ];
 
-    testFiles.forEach(filename => {
+    testFiles.forEach((filename) => {
       let hasFrontendChanges = false;
       for (let extension of frontendExtensions) {
         if (filename.endsWith(extension)) {
@@ -111,7 +113,7 @@ describe('frontend change detection', () => {
       'Dockerfile',
     ];
 
-    testFiles.forEach(filename => {
+    testFiles.forEach((filename) => {
       let hasFrontendChanges = false;
       for (let extension of frontendExtensions) {
         if (filename.endsWith(extension)) {
@@ -128,10 +130,10 @@ describe('path resolution', () => {
   it('should resolve paths correctly', () => {
     const basePath = './base-report.json';
     const headPath = './head-report.json';
-    
+
     const resolvedBase = path.resolve(process.cwd(), basePath);
     const resolvedHead = path.resolve(process.cwd(), headPath);
-    
+
     expect(resolvedBase).toContain('base-report.json');
     expect(resolvedHead).toContain('head-report.json');
     expect(path.isAbsolute(resolvedBase)).toBe(true);
@@ -192,9 +194,9 @@ describe('labeling logic', () => {
       },
     };
 
-    const shouldAddIncreaseLabel = 
+    const shouldAddIncreaseLabel =
       mockDiff.chunks.added.length > 0 || mockDiff.chunks.bigger.length > 0;
-    
+
     expect(shouldAddIncreaseLabel).toBe(true);
   });
 
@@ -210,9 +212,9 @@ describe('labeling logic', () => {
       },
     };
 
-    const shouldAddDecreaseLabel = 
+    const shouldAddDecreaseLabel =
       mockDiff.chunks.removed.length > 0 || mockDiff.chunks.smaller.length > 0;
-    
+
     expect(shouldAddDecreaseLabel).toBe(true);
   });
 
@@ -241,7 +243,7 @@ describe('input processing', () => {
     const shouldGateInput = 'true';
     const shouldGate = Boolean(shouldGateInput);
     expect(shouldGate).toBe(true);
-    
+
     const shouldNotGateInput = '';
     const shouldNotGate = Boolean(shouldNotGateInput);
     expect(shouldNotGate).toBe(false);
