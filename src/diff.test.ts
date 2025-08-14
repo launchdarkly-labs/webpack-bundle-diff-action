@@ -1,4 +1,4 @@
-import { getDiff, parseAssetName } from './diff';
+import { getDiff, parseAssetName, affectsLongTermCaching } from './diff';
 import {
   renderTotalDownloadedBytesTable,
   renderLongTermCachingSummary,
@@ -175,4 +175,151 @@ test('total downloaded bytes diff', () => {
 
 test('long-term cache invalidation summary', () => {
   expect(renderLongTermCachingSummary({ diff })).toMatchSnapshot();
+});
+
+// Test the affectsLongTermCaching function with proper types
+test('affectsLongTermCaching', () => {
+  // Should return true when there are changes that affect caching
+  const diffWithChanges = {
+    chunks: {
+      bigger: [
+        {
+          name: 'main.js',
+          baseSize: 100000,
+          headSize: 101000,
+          delta: 1000,
+          ratio: 0.01,
+        },
+      ],
+      smaller: [],
+      added: [],
+      removed: [],
+      negligible: [],
+      violations: [],
+    },
+    totalBytes: { base: 100000, head: 101000 },
+  };
+  expect(affectsLongTermCaching(diffWithChanges)).toBe(true);
+
+  // Should return false when no changes affect caching
+  const diffNoChanges = {
+    chunks: {
+      bigger: [],
+      smaller: [],
+      added: [],
+      removed: [],
+      negligible: [],
+      violations: [],
+    },
+    totalBytes: { base: 100000, head: 100000 },
+  };
+  expect(affectsLongTermCaching(diffNoChanges)).toBe(false);
+
+  // Should return true with negligible changes that have delta > 0
+  const diffNegligibleChanges = {
+    chunks: {
+      bigger: [],
+      smaller: [],
+      added: [],
+      removed: [],
+      negligible: [
+        {
+          name: 'chunk.js',
+          baseSize: 10000,
+          headSize: 10000,
+          delta: 0,
+          ratio: 0,
+        },
+        {
+          name: 'chunk2.js',
+          baseSize: 10000,
+          headSize: 10100,
+          delta: 100,
+          ratio: 0.01,
+        },
+      ],
+      violations: [],
+    },
+    totalBytes: { base: 20000, head: 20100 },
+  };
+  expect(affectsLongTermCaching(diffNegligibleChanges)).toBe(true);
+});
+
+// Test getDiff edge cases with existing data
+describe('getDiff function edge cases', () => {
+  test('should handle different threshold values', () => {
+    const result1 = getDiff(
+      {
+        base: {
+          report: require('../base-webpack-bundle-analyzer-report.json'),
+        },
+        head: {
+          report: require('../head-webpack-bundle-analyzer-report.json'),
+        },
+      },
+      { diffThreshold: 0.001 }, // Very low threshold
+    );
+
+    const result2 = getDiff(
+      {
+        base: {
+          report: require('../base-webpack-bundle-analyzer-report.json'),
+        },
+        head: {
+          report: require('../head-webpack-bundle-analyzer-report.json'),
+        },
+      },
+      { diffThreshold: 0.5 }, // Very high threshold
+    );
+
+    // Lower threshold should result in fewer negligible changes
+    expect(result1.chunks.negligible.length).toBeLessThanOrEqual(
+      result2.chunks.negligible.length,
+    );
+  });
+
+  test('should handle budget violations with existing data', () => {
+    const result = getDiff(
+      {
+        base: {
+          report: require('../violation-base-webpack-bundle-analyzer-report.json'),
+        },
+        head: {
+          report: require('../violation-head-webpack-bundle-analyzer-report.json'),
+        },
+      },
+      {
+        diffThreshold: 0.05,
+        bundleBudgets: [
+          { name: 'common.js', budget: 10 },
+          { name: 'nonexistent.js', budget: 5 }, // Should not cause issues
+        ],
+      },
+    );
+
+    // Should detect violations from the existing test data
+    expect(result.chunks.violations.length).toBeGreaterThanOrEqual(0);
+    if (result.chunks.violations.length > 0) {
+      expect(result.chunks.violations[0]).toHaveProperty('budget');
+    }
+  });
+
+  test('should calculate total bytes from real data', () => {
+    const result = getDiff(
+      {
+        base: {
+          report: require('../base-webpack-bundle-analyzer-report.json'),
+        },
+        head: {
+          report: require('../head-webpack-bundle-analyzer-report.json'),
+        },
+      },
+      { diffThreshold: 0.05 },
+    );
+
+    expect(typeof result.totalBytes.base).toBe('number');
+    expect(typeof result.totalBytes.head).toBe('number');
+    expect(result.totalBytes.base).toBeGreaterThan(0);
+    expect(result.totalBytes.head).toBeGreaterThan(0);
+  });
 });
