@@ -74,10 +74,14 @@ async function run() {
 
     // Input validation
     if (!inputs.base.report) {
-      throw new Error('base-bundle-analysis-report-path is required but not provided');
+      throw new Error(
+        'base-bundle-analysis-report-path is required but not provided',
+      );
     }
     if (!inputs.head.report) {
-      throw new Error('head-bundle-analysis-report-path is required but not provided');
+      throw new Error(
+        'head-bundle-analysis-report-path is required but not provided',
+      );
     }
     if (!inputs.githubToken) {
       throw new Error('github-token is required but not provided');
@@ -154,7 +158,6 @@ async function run() {
       throw new Error(`Failed to retrieve artifacts for run ${runId}.`);
     }
 
-
     const paths = {
       base: {
         report: path.resolve(process.cwd(), inputs.base.report),
@@ -183,11 +186,11 @@ async function run() {
     core.info(JSON.stringify(diff.chunks));
 
     // Optimize change counting with direct property access
-    const numberOfChanges = 
-      diff.chunks.added.length + 
-      diff.chunks.removed.length + 
-      diff.chunks.bigger.length + 
-      diff.chunks.smaller.length + 
+    const numberOfChanges =
+      diff.chunks.added.length +
+      diff.chunks.removed.length +
+      diff.chunks.bigger.length +
+      diff.chunks.smaller.length +
       diff.chunks.violations.length;
 
     let body: string;
@@ -366,7 +369,11 @@ async function run() {
           });
         } catch (error) {
           core.warning(
-            `Failed to remove "${inputs.violationLabel}" label from PR ${pullRequestId}: ${error instanceof Error ? error.message : String(error)}`,
+            `Failed to remove "${
+              inputs.violationLabel
+            }" label from PR ${pullRequestId}: ${
+              error instanceof Error ? error.message : String(error)
+            }`,
           );
         }
       }
@@ -406,7 +413,11 @@ async function run() {
           });
         } catch (error) {
           core.warning(
-            `Failed to remove "${inputs.increaseLabel}" label from PR ${pullRequestId}: ${error instanceof Error ? error.message : String(error)}`,
+            `Failed to remove "${
+              inputs.increaseLabel
+            }" label from PR ${pullRequestId}: ${
+              error instanceof Error ? error.message : String(error)
+            }`,
           );
         }
       }
@@ -439,7 +450,11 @@ async function run() {
           });
         } catch (error) {
           core.warning(
-            `Failed to remove "${inputs.decreaseLabel}" label from PR ${pullRequestId}: ${error instanceof Error ? error.message : String(error)}`,
+            `Failed to remove "${
+              inputs.decreaseLabel
+            }" label from PR ${pullRequestId}: ${
+              error instanceof Error ? error.message : String(error)
+            }`,
           );
         }
       }

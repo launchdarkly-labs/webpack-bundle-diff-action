@@ -67,7 +67,7 @@ export const parseAssetName = (name: string) => {
 /**
  * Compares webpack bundle analyzer reports between base and head branches
  * and generates a comprehensive diff showing size changes and budget violations.
- * 
+ *
  * @param analysis - Object containing base and head bundle analyzer reports
  * @param options - Configuration options including diff threshold and bundle budgets
  * @returns Diff object containing categorized asset changes and total byte differences
@@ -226,7 +226,7 @@ export function getDiff(
 /**
  * Determines if the bundle changes will affect long-term caching strategies.
  * Changes that affect caching include new, removed, or resized assets.
- * 
+ *
  * @param diff - The bundle diff to analyze
  * @returns True if changes will impact long-term caching
  */

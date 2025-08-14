@@ -109,14 +109,19 @@ ${!isEmpty ? children : ifEmpty}
 
 export function renderSummaryTable({ diff }: { diff: Diff }) {
   // Combine all reduce operations into a single pass for better performance
-  const { bigger, smaller, added, removed } = Object.entries(diff.chunks).reduce(
+  const { bigger, smaller, added, removed } = Object.entries(
+    diff.chunks,
+  ).reduce(
     (acc, [key, assets]) => {
       if (key !== 'negligible' && key !== 'violations') {
-        acc[key as keyof typeof acc] = assets.reduce((total, asset) => total + asset.delta, 0);
+        acc[key as keyof typeof acc] = assets.reduce(
+          (total, asset) => total + asset.delta,
+          0,
+        );
       }
       return acc;
     },
-    { bigger: 0, smaller: 0, added: 0, removed: 0 }
+    { bigger: 0, smaller: 0, added: 0, removed: 0 },
   );
 
   const total = bigger + smaller + added + removed;
@@ -192,21 +197,26 @@ export function renderLongTermCachingSummary({ diff }: { diff: Diff }) {
     .reduce((total, size) => total + size, 0);
 
   // Cache filtered negligible assets to avoid redundant filtering
-  const changedNegligibleAssets = diff.chunks.negligible.filter((asset) => Math.abs(asset.delta) > 0);
-  
+  const changedNegligibleAssets = diff.chunks.negligible.filter(
+    (asset) => Math.abs(asset.delta) > 0,
+  );
+
   const invalidatedCount =
     diff.chunks.bigger.length +
     diff.chunks.smaller.length +
     changedNegligibleAssets.length;
-  
+
   // Combine multiple map().reduce() operations for better performance
-  const invalidatedBytes = 
+  const invalidatedBytes =
     diff.chunks.bigger.reduce((total, asset) => total + asset.headSize, 0) +
     diff.chunks.smaller.reduce((total, asset) => total + asset.headSize, 0) +
     changedNegligibleAssets.reduce((total, asset) => total + asset.headSize, 0);
 
   const addedCount = diff.chunks.added.length;
-  const addedBytes = diff.chunks.added.reduce((total, asset) => total + asset.headSize, 0);
+  const addedBytes = diff.chunks.added.reduce(
+    (total, asset) => total + asset.headSize,
+    0,
+  );
 
   const totalBytes = addedBytes + invalidatedBytes + unchangedBytes;
 
@@ -379,13 +389,17 @@ const pluralRules = new Intl.PluralRules('en');
 
 /**
  * Returns the correct plural form based on count using English plural rules.
- * 
+ *
  * @param count - The number to check for pluralization
  * @param singular - The singular form of the word
  * @param plural - The plural form of the word
  * @returns The appropriate form based on the count
  */
-export function pluralize(count: number, singular: string, plural: string): string {
+export function pluralize(
+  count: number,
+  singular: string,
+  plural: string,
+): string {
   const rule = pluralRules.select(count);
 
   switch (rule) {
@@ -400,7 +414,7 @@ export function pluralize(count: number, singular: string, plural: string): stri
 
 /**
  * Truncates a Git SHA to the first 9 characters for display.
- * 
+ *
  * @param sha - The full SHA string
  * @returns The shortened SHA (first 9 characters)
  */
@@ -410,12 +424,15 @@ export function shortSha(sha: string): string {
 
 /**
  * Generates a GitHub compare URL for viewing changes between two commits.
- * 
+ *
  * @param baseSha - The base commit SHA
  * @param headSha - The head commit SHA
  * @returns Markdown link to GitHub compare view
  */
-export function renderGithubCompareLink(baseSha: string, headSha: string): string {
+export function renderGithubCompareLink(
+  baseSha: string,
+  headSha: string,
+): string {
   return `[${shortSha(baseSha)}…${shortSha(
     headSha,
   )}](https://github.com/launchdarkly/gonfalon/compare/${baseSha}...${headSha} "Compare the head branch sha to the base branch sha for this run")`;
