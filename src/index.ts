@@ -70,7 +70,8 @@ async function run() {
       githubToken: core.getInput('github-token'),
       bundleBudgets: processBundleBudgets(),
       shouldGateFailures: core.getInput('should-block-pr-on-exceeded-budget'),
-      skipCommentOnNoChanges: core.getInput('skip-comment-on-no-changes') === 'true',
+      skipCommentOnNoChanges:
+        core.getInput('skip-comment-on-no-changes') === 'true',
     };
 
     // Input validation
@@ -203,17 +204,17 @@ async function run() {
       if (diff.chunks.violations.length > 0) {
         return true;
       }
-      
+
       // Significant if there are any non-negligible changes
       if (numberOfChanges > 0) {
         return true;
       }
-      
+
       // Check if there are meaningful negligible changes (beyond noise)
       const meaningfulNegligibleChanges = diff.chunks.negligible.filter(
-        asset => Math.abs(asset.delta) > 1000 // More than 1KB change
+        (asset) => Math.abs(asset.delta) > 1000, // More than 1KB change
       );
-      
+
       return meaningfulNegligibleChanges.length > 0;
     };
 
@@ -366,10 +367,13 @@ async function run() {
     }
 
     // Skip comment posting if configured to do so and there are no significant changes
-    const shouldSkipComment = inputs.skipCommentOnNoChanges && !hasSignificantChanges();
-    
+    const shouldSkipComment =
+      inputs.skipCommentOnNoChanges && !hasSignificantChanges();
+
     if (shouldSkipComment) {
-      core.info('Skipping PR comment as there are no significant bundle changes');
+      core.info(
+        'Skipping PR comment as there are no significant bundle changes',
+      );
     } else {
       await octokit.rest.issues.createComment({
         owner,

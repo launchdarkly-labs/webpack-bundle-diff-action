@@ -93,31 +93,32 @@ describe('skip comment logic', () => {
         violations: [] as any[],
         negligible: [
           { delta: 50, name: 'small-change.js' }, // Less than 1KB threshold
-        ] as any[]
-      }
+        ] as any[],
+      },
     };
 
     const hasSignificantChanges = (): boolean => {
       if (mockDiff.chunks.violations.length > 0) return true;
-      
-      const numberOfChanges = 
+
+      const numberOfChanges =
         mockDiff.chunks.added.length +
         mockDiff.chunks.removed.length +
         mockDiff.chunks.bigger.length +
         mockDiff.chunks.smaller.length +
         mockDiff.chunks.violations.length;
-      
+
       if (numberOfChanges > 0) return true;
-      
+
       const meaningfulNegligibleChanges = mockDiff.chunks.negligible.filter(
-        asset => Math.abs(asset.delta) > 1000
+        (asset) => Math.abs(asset.delta) > 1000,
       );
-      
+
       return meaningfulNegligibleChanges.length > 0;
     };
 
     const skipCommentOnNoChanges = true;
-    const shouldSkipComment = skipCommentOnNoChanges && !hasSignificantChanges();
+    const shouldSkipComment =
+      skipCommentOnNoChanges && !hasSignificantChanges();
 
     expect(shouldSkipComment).toBe(true);
   });
@@ -130,31 +131,32 @@ describe('skip comment logic', () => {
         bigger: [] as any[],
         smaller: [] as any[],
         violations: [] as any[],
-        negligible: [] as any[]
-      }
+        negligible: [] as any[],
+      },
     };
 
     const hasSignificantChanges = (): boolean => {
       if (mockDiff.chunks.violations.length > 0) return true;
-      
-      const numberOfChanges = 
+
+      const numberOfChanges =
         mockDiff.chunks.added.length +
         mockDiff.chunks.removed.length +
         mockDiff.chunks.bigger.length +
         mockDiff.chunks.smaller.length +
         mockDiff.chunks.violations.length;
-      
+
       if (numberOfChanges > 0) return true;
-      
+
       const meaningfulNegligibleChanges = mockDiff.chunks.negligible.filter(
-        asset => Math.abs(asset.delta) > 1000
+        (asset) => Math.abs(asset.delta) > 1000,
       );
-      
+
       return meaningfulNegligibleChanges.length > 0;
     };
 
     const skipCommentOnNoChanges = true;
-    const shouldSkipComment = skipCommentOnNoChanges && !hasSignificantChanges();
+    const shouldSkipComment =
+      skipCommentOnNoChanges && !hasSignificantChanges();
 
     expect(shouldSkipComment).toBe(false);
   });
@@ -167,8 +169,8 @@ describe('skip comment logic', () => {
         bigger: [] as any[],
         smaller: [] as any[],
         violations: [] as any[],
-        negligible: [] as any[]
-      }
+        negligible: [] as any[],
+      },
     };
 
     const hasSignificantChanges = (): boolean => {
@@ -176,7 +178,8 @@ describe('skip comment logic', () => {
     };
 
     const skipCommentOnNoChanges = false;
-    const shouldSkipComment = skipCommentOnNoChanges && !hasSignificantChanges();
+    const shouldSkipComment =
+      skipCommentOnNoChanges && !hasSignificantChanges();
 
     expect(shouldSkipComment).toBe(false);
   });
@@ -191,27 +194,27 @@ describe('skip comment logic', () => {
         violations: [] as any[],
         negligible: [
           { delta: 1500, name: 'large-change.js' }, // Above 1KB threshold
-          { delta: 500, name: 'small-change.js' }   // Below 1KB threshold
-        ] as any[]
-      }
+          { delta: 500, name: 'small-change.js' }, // Below 1KB threshold
+        ] as any[],
+      },
     };
 
     const hasSignificantChanges = (): boolean => {
       if (mockDiff.chunks.violations.length > 0) return true;
-      
-      const numberOfChanges = 
+
+      const numberOfChanges =
         mockDiff.chunks.added.length +
         mockDiff.chunks.removed.length +
         mockDiff.chunks.bigger.length +
         mockDiff.chunks.smaller.length +
         mockDiff.chunks.violations.length;
-      
+
       if (numberOfChanges > 0) return true;
-      
+
       const meaningfulNegligibleChanges = mockDiff.chunks.negligible.filter(
-        asset => Math.abs(asset.delta) > 1000
+        (asset) => Math.abs(asset.delta) > 1000,
       );
-      
+
       return meaningfulNegligibleChanges.length > 0;
     };
 
