@@ -70,6 +70,7 @@ async function run() {
       githubToken: core.getInput('github-token'),
       bundleBudgets: processBundleBudgets(),
       shouldGateFailures: core.getInput('should-block-pr-on-exceeded-budget'),
+      skipCommentOnNoChanges: core.getInput('skip-comment-on-no-changes') === 'true',
     };
 
     // Input validation
@@ -192,6 +193,29 @@ async function run() {
       diff.chunks.bigger.length +
       diff.chunks.smaller.length +
       diff.chunks.violations.length;
+
+    /**
+     * Determines if the changes are significant enough to warrant a PR comment.
+     * This considers both the number of changes and the impact of those changes.
+     */
+    const hasSignificantChanges = (): boolean => {
+      // Always significant if there are budget violations
+      if (diff.chunks.violations.length > 0) {
+        return true;
+      }
+      
+      // Significant if there are any non-negligible changes
+      if (numberOfChanges > 0) {
+        return true;
+      }
+      
+      // Check if there are meaningful negligible changes (beyond noise)
+      const meaningfulNegligibleChanges = diff.chunks.negligible.filter(
+        asset => Math.abs(asset.delta) > 1000 // More than 1KB change
+      );
+      
+      return meaningfulNegligibleChanges.length > 0;
+    };
 
     let body: string;
     if (numberOfChanges === 0) {
@@ -341,12 +365,19 @@ async function run() {
       ].join('\n');
     }
 
-    await octokit.rest.issues.createComment({
-      owner,
-      repo,
-      issue_number: pullRequestId,
-      body,
-    });
+    // Skip comment posting if configured to do so and there are no significant changes
+    const shouldSkipComment = inputs.skipCommentOnNoChanges && !hasSignificantChanges();
+    
+    if (shouldSkipComment) {
+      core.info('Skipping PR comment as there are no significant bundle changes');
+    } else {
+      await octokit.rest.issues.createComment({
+        owner,
+        repo,
+        issue_number: pullRequestId,
+        body,
+      });
+    }
 
     if (diff.chunks.violations.length === 0) {
       const violationlabels = await octokit.rest.issues.listLabelsOnIssue({
