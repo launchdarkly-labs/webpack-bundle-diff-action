@@ -90,4 +90,3 @@ jobs:
         increase-label: '📈 bundle increase'
         decrease-label: '📉 bundle decrease'
         violation-label: '🚨 bundle budget violation'
-        skip-comment-on-no-changes: true
