@@ -4,3 +4,5 @@ npm-debug.log*
 .DS_Store
 .python-version
 .idea
+test-dist/
+projects/
