@@ -361,8 +361,7 @@ async function run() {
                 return true;
             }
             // Check if there are meaningful negligible changes (beyond noise)
-            const meaningfulNegligibleChanges = diff.chunks.negligible.filter(asset => Math.abs(asset.delta) > 1000 // More than 1KB change
-            );
+            const meaningfulNegligibleChanges = diff.chunks.negligible.filter((asset) => Math.abs(asset.delta) > 1000);
             return meaningfulNegligibleChanges.length > 0;
         };
         let body;
