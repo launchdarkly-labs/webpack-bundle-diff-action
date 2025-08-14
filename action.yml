@@ -29,6 +29,10 @@ inputs:
   should-block-pr-on-exceeded-budget:
     description: 'if targeted-bundles is declared, fail build if budget is exceeded for a targeted bundle'
     required: false
+  skip-comment-on-no-changes:
+    description: 'Skip posting PR comment when there are no significant bundle changes'
+    required: false
+    default: 'false'
 
 runs:
   using: 'node12'

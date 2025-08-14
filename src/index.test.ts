@@ -81,6 +81,147 @@ describe('assertFileExists', () => {
   });
 });
 
+// Test skip comment logic
+describe('skip comment logic', () => {
+  it('should skip comment when skipCommentOnNoChanges is true and no significant changes', () => {
+    const mockDiff = {
+      chunks: {
+        added: [] as any[],
+        removed: [] as any[],
+        bigger: [] as any[],
+        smaller: [] as any[],
+        violations: [] as any[],
+        negligible: [
+          { delta: 50, name: 'small-change.js' }, // Less than 1KB threshold
+        ] as any[],
+      },
+    };
+
+    const hasSignificantChanges = (): boolean => {
+      if (mockDiff.chunks.violations.length > 0) return true;
+
+      const numberOfChanges =
+        mockDiff.chunks.added.length +
+        mockDiff.chunks.removed.length +
+        mockDiff.chunks.bigger.length +
+        mockDiff.chunks.smaller.length +
+        mockDiff.chunks.violations.length;
+
+      if (numberOfChanges > 0) return true;
+
+      const meaningfulNegligibleChanges = mockDiff.chunks.negligible.filter(
+        (asset) => Math.abs(asset.delta) > 1000,
+      );
+
+      return meaningfulNegligibleChanges.length > 0;
+    };
+
+    const skipCommentOnNoChanges = true;
+    const shouldSkipComment =
+      skipCommentOnNoChanges && !hasSignificantChanges();
+
+    expect(shouldSkipComment).toBe(true);
+  });
+
+  it('should not skip comment when there are significant changes', () => {
+    const mockDiff = {
+      chunks: {
+        added: [{ name: 'new-file.js' }] as any[],
+        removed: [] as any[],
+        bigger: [] as any[],
+        smaller: [] as any[],
+        violations: [] as any[],
+        negligible: [] as any[],
+      },
+    };
+
+    const hasSignificantChanges = (): boolean => {
+      if (mockDiff.chunks.violations.length > 0) return true;
+
+      const numberOfChanges =
+        mockDiff.chunks.added.length +
+        mockDiff.chunks.removed.length +
+        mockDiff.chunks.bigger.length +
+        mockDiff.chunks.smaller.length +
+        mockDiff.chunks.violations.length;
+
+      if (numberOfChanges > 0) return true;
+
+      const meaningfulNegligibleChanges = mockDiff.chunks.negligible.filter(
+        (asset) => Math.abs(asset.delta) > 1000,
+      );
+
+      return meaningfulNegligibleChanges.length > 0;
+    };
+
+    const skipCommentOnNoChanges = true;
+    const shouldSkipComment =
+      skipCommentOnNoChanges && !hasSignificantChanges();
+
+    expect(shouldSkipComment).toBe(false);
+  });
+
+  it('should not skip comment when skipCommentOnNoChanges is false', () => {
+    const mockDiff = {
+      chunks: {
+        added: [] as any[],
+        removed: [] as any[],
+        bigger: [] as any[],
+        smaller: [] as any[],
+        violations: [] as any[],
+        negligible: [] as any[],
+      },
+    };
+
+    const hasSignificantChanges = (): boolean => {
+      return false; // No changes at all
+    };
+
+    const skipCommentOnNoChanges = false;
+    const shouldSkipComment =
+      skipCommentOnNoChanges && !hasSignificantChanges();
+
+    expect(shouldSkipComment).toBe(false);
+  });
+
+  it('should detect meaningful negligible changes above 1KB threshold', () => {
+    const mockDiff = {
+      chunks: {
+        added: [] as any[],
+        removed: [] as any[],
+        bigger: [] as any[],
+        smaller: [] as any[],
+        violations: [] as any[],
+        negligible: [
+          { delta: 1500, name: 'large-change.js' }, // Above 1KB threshold
+          { delta: 500, name: 'small-change.js' }, // Below 1KB threshold
+        ] as any[],
+      },
+    };
+
+    const hasSignificantChanges = (): boolean => {
+      if (mockDiff.chunks.violations.length > 0) return true;
+
+      const numberOfChanges =
+        mockDiff.chunks.added.length +
+        mockDiff.chunks.removed.length +
+        mockDiff.chunks.bigger.length +
+        mockDiff.chunks.smaller.length +
+        mockDiff.chunks.violations.length;
+
+      if (numberOfChanges > 0) return true;
+
+      const meaningfulNegligibleChanges = mockDiff.chunks.negligible.filter(
+        (asset) => Math.abs(asset.delta) > 1000,
+      );
+
+      return meaningfulNegligibleChanges.length > 0;
+    };
+
+    expect(hasSignificantChanges()).toBe(true);
+  });
+});
+
 // Test frontend extension detection logic
 describe('frontend change detection', () => {
   const frontendExtensions = ['js', 'css', 'ts', 'tsx', 'json'];

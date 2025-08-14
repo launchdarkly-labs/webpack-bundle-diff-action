@@ -92,6 +92,39 @@ jobs:
 
 ```
 
+## Configuration Options
+
+### `skip-comment-on-no-changes`
+
+By default, this action will always post a PR comment, even when there are no significant bundle changes. You can configure it to skip posting comments when there are no meaningful changes:
+
+```yaml
+- name: Diff between base and head
+  uses: launchdarkly-labs/webpack-bundle-diff-action@main
+  with:
+    github-token: ${{ secrets.GITHUB_TOKEN }}
+    base-bundle-analysis-report-path: ./base-stats/webpack-bundle-analyzer-report.json
+    head-bundle-analysis-report-path: ./head-stats/webpack-bundle-analyzer-report.json
+    skip-comment-on-no-changes: true  # Skip comments when no significant changes
+```
+
+**What constitutes "significant changes":**
+- Any budget violations
+- Any new, removed, bigger, or smaller bundles
+- Negligible changes larger than 1KB
+
+Labels will still be managed correctly even when comments are skipped.
+
+### Bundle Budgets
+
+You can set bundle size budgets by adding environment variables with the `INPUT_BUNDLE_` prefix:
+
+```yaml
+env:
+  INPUT_BUNDLE_MAIN: 250000      # 250KB budget for main.js
+  INPUT_BUNDLE_VENDOR: 500000    # 500KB budget for vendor.js
+```
+
 ## Contributing
 
 ```bash
