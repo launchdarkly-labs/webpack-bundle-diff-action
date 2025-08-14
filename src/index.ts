@@ -2,7 +2,6 @@ import * as core from '@actions/core';
 import * as github from '@actions/github';
 import { access, constants } from 'fs';
 import * as path from 'path';
-// @ts-nocheck
 import { affectsLongTermCaching, BundleBudget, getDiff } from './diff';
 import {
   renderSection,
@@ -73,6 +72,24 @@ async function run() {
       shouldGateFailures: core.getInput('should-block-pr-on-exceeded-budget'),
     };
 
+    // Input validation
+    if (!inputs.base.report) {
+      throw new Error(
+        'base-bundle-analysis-report-path is required but not provided',
+      );
+    }
+    if (!inputs.head.report) {
+      throw new Error(
+        'head-bundle-analysis-report-path is required but not provided',
+      );
+    }
+    if (!inputs.githubToken) {
+      throw new Error('github-token is required but not provided');
+    }
+    if (isNaN(inputs.diffThreshold) || inputs.diffThreshold < 0) {
+      throw new Error('diff-threshold must be a non-negative number');
+    }
+
     const runId = github.context.runId;
     const owner = github.context.repo.owner;
     const repo = github.context.repo.repo;
@@ -141,8 +158,6 @@ async function run() {
       throw new Error(`Failed to retrieve artifacts for run ${runId}.`);
     }
 
-    console.log(JSON.stringify(artifacts.data, null, 2));
-
     const paths = {
       base: {
         report: path.resolve(process.cwd(), inputs.base.report),
@@ -170,10 +185,13 @@ async function run() {
     });
     core.info(JSON.stringify(diff.chunks));
 
-    const numberOfChanges = Object.entries(diff.chunks)
-      .filter(([kind]) => kind !== 'negligible')
-      .map(([_, assets]) => assets.length)
-      .reduce((total, size) => total + size, 0);
+    // Optimize change counting with direct property access
+    const numberOfChanges =
+      diff.chunks.added.length +
+      diff.chunks.removed.length +
+      diff.chunks.bigger.length +
+      diff.chunks.smaller.length +
+      diff.chunks.violations.length;
 
     let body: string;
     if (numberOfChanges === 0) {
@@ -351,7 +369,11 @@ async function run() {
           });
         } catch (error) {
           core.warning(
-            `Failed to remove "${inputs.violationLabel}" label from PR ${pullRequestId}`,
+            `Failed to remove "${
+              inputs.violationLabel
+            }" label from PR ${pullRequestId}: ${
+              error instanceof Error ? error.message : String(error)
+            }`,
           );
         }
       }
@@ -391,7 +413,11 @@ async function run() {
           });
         } catch (error) {
           core.warning(
-            `Failed to remove "${inputs.increaseLabel}" label from PR ${pullRequestId}`,
+            `Failed to remove "${
+              inputs.increaseLabel
+            }" label from PR ${pullRequestId}: ${
+              error instanceof Error ? error.message : String(error)
+            }`,
           );
         }
       }
@@ -424,7 +450,11 @@ async function run() {
           });
         } catch (error) {
           core.warning(
-            `Failed to remove "${inputs.decreaseLabel}" label from PR ${pullRequestId}`,
+            `Failed to remove "${
+              inputs.decreaseLabel
+            }" label from PR ${pullRequestId}: ${
+              error instanceof Error ? error.message : String(error)
+            }`,
           );
         }
       }

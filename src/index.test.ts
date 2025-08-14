@@ -1,7 +1,7 @@
-// @ts-nocheck
 // Simple integration tests for index.ts core functions
 import { access } from 'fs';
 import * as path from 'path';
+import { BundleBudget } from './diff';
 
 // Test the processBundleBudgets function logic
 describe('processBundleBudgets', () => {
@@ -17,7 +17,7 @@ describe('processBundleBudgets', () => {
     process.env.INPUT_SOME_OTHER_VAR = 'ignore';
 
     const processBundleBudgets = () => {
-      const bundleBudgets: any[] = [];
+      const bundleBudgets: BundleBudget[] = [];
       for (let [k, v] of Object.entries(process.env)) {
         if (k.startsWith('INPUT_BUNDLE')) {
           let name = k.replace('INPUT_BUNDLE_', '').toLowerCase() + '.js';
@@ -50,7 +50,7 @@ describe('assertFileExists', () => {
     // Mock access to succeed
     const mockAccess = jest.spyOn(require('fs'), 'access');
     mockAccess.mockImplementation((path, mode, callback) => {
-      callback(null);
+      (callback as (err: Error | null) => void)(null);
     });
 
     await expect(assertFileExists('/mock/path')).resolves.toBeUndefined();
@@ -70,7 +70,7 @@ describe('assertFileExists', () => {
     // Mock access to fail
     const mockAccess = jest.spyOn(require('fs'), 'access');
     mockAccess.mockImplementation((path, mode, callback) => {
-      callback(new Error('File not found'));
+      (callback as (err: Error | null) => void)(new Error('File not found'));
     });
 
     await expect(assertFileExists('/nonexistent/path')).rejects.toThrow(

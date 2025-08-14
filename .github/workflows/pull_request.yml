@@ -18,3 +18,14 @@ jobs:
         run: npm test
       - name: package
         run: npm run package
+      - name: check for uncommitted changes
+        run: |
+          if [ -n "$(git status --porcelain)" ]; then
+            echo "❌ Uncommitted changes detected after packaging:"
+            git status --porcelain
+            echo ""
+            echo "Please run 'npm run package' and commit the changes."
+            exit 1
+          else
+            echo "✅ No uncommitted changes after packaging"
+          fi
