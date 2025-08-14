@@ -30,6 +30,14 @@ const parseAssetName = (name) => {
     };
 };
 exports.parseAssetName = parseAssetName;
+/**
+ * Compares webpack bundle analyzer reports between base and head branches
+ * and generates a comprehensive diff showing size changes and budget violations.
+ *
+ * @param analysis - Object containing base and head bundle analyzer reports
+ * @param options - Configuration options including diff threshold and bundle budgets
+ * @returns Diff object containing categorized asset changes and total byte differences
+ */
 function getDiff(analysis, { diffThreshold, bundleBudgets, }) {
     const processReportItems = (report, label) => {
         const processed = report
@@ -149,6 +157,13 @@ function getDiff(analysis, { diffThreshold, bundleBudgets, }) {
     return diff;
 }
 exports.getDiff = getDiff;
+/**
+ * Determines if the bundle changes will affect long-term caching strategies.
+ * Changes that affect caching include new, removed, or resized assets.
+ *
+ * @param diff - The bundle diff to analyze
+ * @returns True if changes will impact long-term caching
+ */
 function affectsLongTermCaching(diff) {
     return (diff.chunks.added.length > 0 ||
         diff.chunks.bigger.length > 0 ||
@@ -194,7 +209,6 @@ const core = __importStar(__nccwpck_require__(2186));
 const github = __importStar(__nccwpck_require__(5438));
 const fs_1 = __nccwpck_require__(7147);
 const path = __importStar(__nccwpck_require__(1017));
-// @ts-nocheck
 const diff_1 = __nccwpck_require__(2484);
 const render_1 = __nccwpck_require__(9089);
 const frontendExtensions = ['js', 'css', 'ts', 'tsx', 'json'];
@@ -236,6 +250,19 @@ async function run() {
             bundleBudgets: processBundleBudgets(),
             shouldGateFailures: core.getInput('should-block-pr-on-exceeded-budget'),
         };
+        // Input validation
+        if (!inputs.base.report) {
+            throw new Error('base-bundle-analysis-report-path is required but not provided');
+        }
+        if (!inputs.head.report) {
+            throw new Error('head-bundle-analysis-report-path is required but not provided');
+        }
+        if (!inputs.githubToken) {
+            throw new Error('github-token is required but not provided');
+        }
+        if (isNaN(inputs.diffThreshold) || inputs.diffThreshold < 0) {
+            throw new Error('diff-threshold must be a non-negative number');
+        }
         const runId = github.context.runId;
         const owner = github.context.repo.owner;
         const repo = github.context.repo.repo;
@@ -290,7 +317,6 @@ async function run() {
         if (artifacts.status !== 200) {
             throw new Error(`Failed to retrieve artifacts for run ${runId}.`);
         }
-        console.log(JSON.stringify(artifacts.data, null, 2));
         const paths = {
             base: {
                 report: path.resolve(process.cwd(), inputs.base.report),
@@ -314,10 +340,12 @@ async function run() {
             bundleBudgets: inputs.bundleBudgets,
         });
         core.info(JSON.stringify(diff.chunks));
-        const numberOfChanges = Object.entries(diff.chunks)
-            .filter(([kind]) => kind !== 'negligible')
-            .map(([_, assets]) => assets.length)
-            .reduce((total, size) => total + size, 0);
+        // Optimize change counting with direct property access
+        const numberOfChanges = diff.chunks.added.length +
+            diff.chunks.removed.length +
+            diff.chunks.bigger.length +
+            diff.chunks.smaller.length +
+            diff.chunks.violations.length;
         let body;
         if (numberOfChanges === 0) {
             body = [
@@ -422,7 +450,7 @@ async function run() {
                     });
                 }
                 catch (error) {
-                    core.warning(`Failed to remove "${inputs.violationLabel}" label from PR ${pullRequestId}`);
+                    core.warning(`Failed to remove "${inputs.violationLabel}" label from PR ${pullRequestId}: ${error instanceof Error ? error.message : String(error)}`);
                 }
             }
         }
@@ -461,7 +489,7 @@ async function run() {
                     });
                 }
                 catch (error) {
-                    core.warning(`Failed to remove "${inputs.increaseLabel}" label from PR ${pullRequestId}`);
+                    core.warning(`Failed to remove "${inputs.increaseLabel}" label from PR ${pullRequestId}: ${error instanceof Error ? error.message : String(error)}`);
                 }
             }
         }
@@ -492,7 +520,7 @@ async function run() {
                     });
                 }
                 catch (error) {
-                    core.warning(`Failed to remove "${inputs.decreaseLabel}" label from PR ${pullRequestId}`);
+                    core.warning(`Failed to remove "${inputs.decreaseLabel}" label from PR ${pullRequestId}: ${error instanceof Error ? error.message : String(error)}`);
                 }
             }
         }
@@ -532,7 +560,6 @@ const formatBytes = (bytes, { signed, minimumFractionDigits = 0, maximumFraction
     minimumFractionDigits: 0,
     maximumFractionDigits: 0,
 }) => (bytes / 1000).toLocaleString('en', {
-    // @ts-ignore: typescript type defs don't know about signDisplay yet
     signDisplay: signed ? 'always' : 'auto',
     minimumFractionDigits,
     maximumFractionDigits,
@@ -575,10 +602,13 @@ ${!isEmpty ? children : ifEmpty}
 }
 exports.renderCollapsibleSection = renderCollapsibleSection;
 function renderSummaryTable({ diff }) {
-    const bigger = Object.values(diff.chunks.bigger).reduce((total, asset) => total + asset.delta, 0);
-    const smaller = Object.values(diff.chunks.smaller).reduce((total, asset) => total + asset.delta, 0);
-    const added = Object.values(diff.chunks.added).reduce((total, asset) => total + asset.delta, 0);
-    const removed = Object.values(diff.chunks.removed).reduce((total, asset) => total + asset.delta, 0);
+    // Combine all reduce operations into a single pass for better performance
+    const { bigger, smaller, added, removed } = Object.entries(diff.chunks).reduce((acc, [key, assets]) => {
+        if (key !== 'negligible' && key !== 'violations') {
+            acc[key] = assets.reduce((total, asset) => total + asset.delta, 0);
+        }
+        return acc;
+    }, { bigger: 0, smaller: 0, added: 0, removed: 0 });
     const total = bigger + smaller + added + removed;
     return (0, markdown_table_1.default)([
         ['', 'Delta'],
@@ -638,24 +668,17 @@ function renderLongTermCachingSummary({ diff }) {
         .filter((asset) => asset.delta === 0)
         .map((asset) => asset.headSize)
         .reduce((total, size) => total + size, 0);
+    // Cache filtered negligible assets to avoid redundant filtering
+    const changedNegligibleAssets = diff.chunks.negligible.filter((asset) => Math.abs(asset.delta) > 0);
     const invalidatedCount = diff.chunks.bigger.length +
         diff.chunks.smaller.length +
-        diff.chunks.negligible.filter((asset) => Math.abs(asset.delta) > 0).length;
-    const invalidatedBytes = diff.chunks.bigger
-        .map((asset) => asset.headSize)
-        .reduce((total, size) => total + size, 0) +
-        diff.chunks.smaller
-            .map((asset) => asset.headSize)
-            .reduce((total, size) => total + size, 0) +
-        diff.chunks.negligible
-            .filter((asset) => Math.abs(asset.delta) > 0)
-            .map((asset) => asset.headSize)
-            .reduce((total, size) => total + size, 0);
-    console.log(diff.chunks.negligible.filter((a) => a.name.includes('ManageAuthorization')));
+        changedNegligibleAssets.length;
+    // Combine multiple map().reduce() operations for better performance
+    const invalidatedBytes = diff.chunks.bigger.reduce((total, asset) => total + asset.headSize, 0) +
+        diff.chunks.smaller.reduce((total, asset) => total + asset.headSize, 0) +
+        changedNegligibleAssets.reduce((total, asset) => total + asset.headSize, 0);
     const addedCount = diff.chunks.added.length;
-    const addedBytes = diff.chunks.added
-        .map((asset) => asset.headSize)
-        .reduce((total, size) => total + size, 0);
+    const addedBytes = diff.chunks.added.reduce((total, asset) => total + asset.headSize, 0);
     const totalBytes = addedBytes + invalidatedBytes + unchangedBytes;
     return [
         `${invalidatedCount} ${pluralize(invalidatedCount, 'chunk', 'chunks')} will be invalidated from [long-term caching](https://webpack.js.org/guides/caching/), and ${addedCount} ${pluralize(addedCount, 'chunk', 'chunks')} will be added.`,
@@ -783,6 +806,14 @@ function renderUnchangedTable({ assets }) {
 }
 exports.renderUnchangedTable = renderUnchangedTable;
 const pluralRules = new Intl.PluralRules('en');
+/**
+ * Returns the correct plural form based on count using English plural rules.
+ *
+ * @param count - The number to check for pluralization
+ * @param singular - The singular form of the word
+ * @param plural - The plural form of the word
+ * @returns The appropriate form based on the count
+ */
 function pluralize(count, singular, plural) {
     const rule = pluralRules.select(count);
     switch (rule) {
@@ -791,14 +822,27 @@ function pluralize(count, singular, plural) {
         case 'other':
             return plural;
         default:
-            return undefined;
+            return plural;
     }
 }
 exports.pluralize = pluralize;
+/**
+ * Truncates a Git SHA to the first 9 characters for display.
+ *
+ * @param sha - The full SHA string
+ * @returns The shortened SHA (first 9 characters)
+ */
 function shortSha(sha) {
     return sha.slice(0, 9);
 }
 exports.shortSha = shortSha;
+/**
+ * Generates a GitHub compare URL for viewing changes between two commits.
+ *
+ * @param baseSha - The base commit SHA
+ * @param headSha - The head commit SHA
+ * @returns Markdown link to GitHub compare view
+ */
 function renderGithubCompareLink(baseSha, headSha) {
     return `[${shortSha(baseSha)}…${shortSha(headSha)}](https://github.com/launchdarkly/gonfalon/compare/${baseSha}...${headSha} "Compare the head branch sha to the base branch sha for this run")`;
 }
