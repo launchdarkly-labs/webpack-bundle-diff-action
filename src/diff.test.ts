@@ -333,9 +333,9 @@ describe('getDiff function edge cases', () => {
         gzipSize: 5000,
         statSize: 10000,
         parsedSize: 10000,
-      }
+      },
     ];
-    
+
     const mockHeadReport = [
       {
         label: 'main.def456.js',
@@ -343,7 +343,7 @@ describe('getDiff function edge cases', () => {
         gzipSize: 5500,
         statSize: 10500,
         parsedSize: 10500, // 500 byte increase (5% change)
-      }
+      },
     ];
 
     // With only percent threshold - should categorize as bigger (5% exceeds 1%)
@@ -352,7 +352,7 @@ describe('getDiff function edge cases', () => {
         base: { report: mockBaseReport },
         head: { report: mockHeadReport },
       },
-      { percentChangeMinimum: 0.01 } // 1% threshold, no size threshold
+      { percentChangeMinimum: 0.01 }, // 1% threshold, no size threshold
     );
 
     // With both thresholds - should be negligible (fails size threshold)
@@ -361,10 +361,10 @@ describe('getDiff function edge cases', () => {
         base: { report: mockBaseReport },
         head: { report: mockHeadReport },
       },
-      { 
+      {
         percentChangeMinimum: 0.01, // 1% threshold (passes)
-        sizeChangeMinimum: 1000 // 1000 byte minimum (fails - change is only 500 bytes)
-      }
+        sizeChangeMinimum: 1000, // 1000 byte minimum (fails - change is only 500 bytes)
+      },
     );
 
     expect(resultOnlyPercent.chunks.bigger.length).toBe(1);
@@ -381,9 +381,9 @@ describe('getDiff function edge cases', () => {
         gzipSize: 50000,
         statSize: 100000,
         parsedSize: 100000,
-      }
+      },
     ];
-    
+
     const mockHeadReport = [
       {
         label: 'main.def456.js',
@@ -391,7 +391,7 @@ describe('getDiff function edge cases', () => {
         gzipSize: 55000,
         statSize: 105000,
         parsedSize: 105000, // 5000 byte increase (5% change)
-      }
+      },
     ];
 
     const result = getDiff(
@@ -399,10 +399,10 @@ describe('getDiff function edge cases', () => {
         base: { report: mockBaseReport },
         head: { report: mockHeadReport },
       },
-      { 
+      {
         percentChangeMinimum: 0.01, // 1% threshold (passes - 5% > 1%)
-        sizeChangeMinimum: 2000 // 2000 byte minimum (passes - 5000 > 2000)
-      }
+        sizeChangeMinimum: 2000, // 2000 byte minimum (passes - 5000 > 2000)
+      },
     );
 
     expect(result.chunks.bigger.length).toBe(1);
@@ -419,7 +419,7 @@ describe('getDiff function edge cases', () => {
           report: require('../head-webpack-bundle-analyzer-report.json'),
         },
       },
-      { percentChangeMinimum: 0.05 } // No sizeChangeMinimum specified
+      { percentChangeMinimum: 0.05 }, // No sizeChangeMinimum specified
     );
 
     // Should work normally without errors - only percent threshold applies

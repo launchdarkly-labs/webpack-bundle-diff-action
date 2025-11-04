@@ -112,14 +112,16 @@ function getDiff(analysis, { percentChangeMinimum, bundleBudgets, sizeChangeMini
             diff.totalBytes.head += headSize;
             // Check if change meets both percentage and size thresholds for significance
             const meetsPercentThreshold = Math.abs(ratio) > percentChangeMinimum;
-            const meetsSizeThreshold = sizeChangeMinimum ? Math.abs(delta) >= sizeChangeMinimum : true;
+            const meetsSizeThreshold = sizeChangeMinimum
+                ? Math.abs(delta) >= sizeChangeMinimum
+                : true;
             const isSignificant = meetsPercentThreshold && meetsSizeThreshold;
             if (ratio > 0 && isSignificant) {
                 // Bigger - passes both thresholds for increase
                 diff.chunks.bigger.push(d);
             }
             else if (ratio < 0 && isSignificant) {
-                // Smaller - passes both thresholds for decrease  
+                // Smaller - passes both thresholds for decrease
                 diff.chunks.smaller.push(d);
             }
             else {

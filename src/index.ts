@@ -243,7 +243,10 @@ async function run() {
             diff.chunks.negligible.length,
             'bundle',
             'bundles',
-          )} changed by less than ${formatThresholds(inputs.percentChangeMinimum, inputs.sizeChangeMinimum)} 🧐`,
+          )} changed by less than ${formatThresholds(
+            inputs.percentChangeMinimum,
+            inputs.sizeChangeMinimum,
+          )} 🧐`,
           isEmpty: diff.chunks.negligible.length === 0,
           children: renderNegligibleTable({
             assets: diff.chunks.negligible.filter(
@@ -344,7 +347,10 @@ async function run() {
             diff.chunks.negligible.length,
             'bundle',
             'bundles',
-          )} changed by less than ${formatThresholds(inputs.percentChangeMinimum, inputs.sizeChangeMinimum)} 🧐`,
+          )} changed by less than ${formatThresholds(
+            inputs.percentChangeMinimum,
+            inputs.sizeChangeMinimum,
+          )} 🧐`,
           isEmpty: diff.chunks.negligible.length === 0,
           children: renderNegligibleTable({
             assets: diff.chunks.negligible.filter(
