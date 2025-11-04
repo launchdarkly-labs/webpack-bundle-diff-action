@@ -375,8 +375,6 @@ async function run() {
             const meaningfulNegligibleChanges = diff.chunks.negligible.filter((asset) => Math.abs(asset.delta) > 1000);
             return meaningfulNegligibleChanges.length > 0;
         };
-        // Magic comment identifier for finding and updating existing comments
-        const magicCommentId = `<!-- webpack-bundle-diff-comment:${pullRequestId} -->`;
         let body;
         if (numberOfChanges === 0) {
             body = [
@@ -395,8 +393,12 @@ async function run() {
                     children: (0, render_1.renderLongTermCachingSummary)({ diff }),
                 }),
                 '---',
-                `Last updated for commit [${headSha.slice(0, 7)}](https://github.com/${owner}/${repo}/commit/${headSha}). This comment will update as new commits are pushed.`,
-                magicCommentId,
+                (0, render_1.renderCommitFooter)({
+                    headSha,
+                    owner,
+                    repo,
+                    pullRequestId,
+                }),
             ].join('\n');
         }
         else {
@@ -455,8 +457,12 @@ async function run() {
                     shouldGateFailures: Boolean(inputs.shouldGateFailures),
                 }),
                 '---',
-                `Last updated for commit [${headSha.slice(0, 7)}](https://github.com/${owner}/${repo}/commit/${headSha}). This comment will update as new commits are pushed.`,
-                magicCommentId,
+                (0, render_1.renderCommitFooter)({
+                    headSha,
+                    owner,
+                    repo,
+                    pullRequestId,
+                }),
             ].join('\n');
         }
         // Skip comment posting if configured to do so and there are no significant changes
@@ -471,10 +477,7 @@ async function run() {
                 repo,
                 issue_number: pullRequestId,
             });
-            const existingComment = comments.data.find((comment) => {
-                var _a;
-                return (_a = comment.body) === null || _a === void 0 ? void 0 : _a.includes(`<!-- webpack-bundle-diff-comment:${pullRequestId} -->`);
-            });
+            const existingComment = comments.data.find((comment) => { var _a; return (_a = comment.body) === null || _a === void 0 ? void 0 : _a.includes((0, render_1.createMagicCommentId)(pullRequestId)); });
             if (existingComment) {
                 // Update existing comment
                 await octokit.rest.issues.updateComment({
@@ -609,7 +612,7 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
 Object.defineProperty(exports, "__esModule", ({ value: true }));
-exports.renderViolationWarning = exports.renderReductionCelebration = exports.renderCommitSummary = exports.renderGithubCompareLink = exports.shortSha = exports.pluralize = exports.renderUnchangedTable = exports.renderSmallerTable = exports.renderBiggerTable = exports.renderViolationsTable = exports.renderNegligibleTable = exports.renderLongTermCachingSummary = exports.renderTotalDownloadedBytesTable = exports.renderRemovedTable = exports.renderAddedTable = exports.renderSummaryTable = exports.renderCollapsibleSection = exports.renderViolationSection = exports.renderSection = exports.formatThresholds = exports.formatRatio = void 0;
+exports.createMagicCommentId = exports.renderCommitFooter = exports.renderViolationWarning = exports.renderReductionCelebration = exports.renderCommitSummary = exports.renderGithubCompareLink = exports.shortSha = exports.pluralize = exports.renderUnchangedTable = exports.renderSmallerTable = exports.renderBiggerTable = exports.renderViolationsTable = exports.renderNegligibleTable = exports.renderLongTermCachingSummary = exports.renderTotalDownloadedBytesTable = exports.renderRemovedTable = exports.renderAddedTable = exports.renderSummaryTable = exports.renderCollapsibleSection = exports.renderViolationSection = exports.renderSection = exports.formatThresholds = exports.formatRatio = void 0;
 const markdown_table_1 = __importDefault(__nccwpck_require__(1062));
 const sortedColumn = (name) => `${name} ▾`;
 const deltaDescending = (a, b) => Math.abs(b.delta) - Math.abs(a.delta);
@@ -953,6 +956,34 @@ function renderViolationWarning({ diff, shouldGateFailures, }) {
     }
 }
 exports.renderViolationWarning = renderViolationWarning;
+/**
+ * Renders the footer with commit information and magic comment identifier.
+ *
+ * @param headSha - The commit SHA to display
+ * @param owner - The repository owner
+ * @param repo - The repository name
+ * @param pullRequestId - The pull request number
+ * @returns The footer markdown with commit info and magic comment
+ */
+function renderCommitFooter({ headSha, owner, repo, pullRequestId, }) {
+    const magicCommentId = `<!-- webpack-bundle-diff-comment:${pullRequestId} -->`;
+    return [
+        `Last updated for commit [${headSha.slice(0, 7)}](https://github.com/${owner}/${repo}/commit/${headSha}). This comment will update as new commits are pushed.`,
+        '',
+        magicCommentId,
+    ].join('\n');
+}
+exports.renderCommitFooter = renderCommitFooter;
+/**
+ * Creates the magic comment identifier for finding existing PR comments.
+ *
+ * @param pullRequestId - The pull request number
+ * @returns The magic comment HTML identifier
+ */
+function createMagicCommentId(pullRequestId) {
+    return `<!-- webpack-bundle-diff-comment:${pullRequestId} -->`;
+}
+exports.createMagicCommentId = createMagicCommentId;
 
 
 /***/ }),

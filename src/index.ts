@@ -22,6 +22,8 @@ import {
   renderViolationsTable,
   renderViolationSection,
   renderViolationWarning,
+  renderCommitFooter,
+  createMagicCommentId,
 } from './render';
 
 const frontendExtensions = ['js', 'css', 'ts', 'tsx', 'json'];
@@ -224,9 +226,6 @@ async function run() {
       return meaningfulNegligibleChanges.length > 0;
     };
 
-    // Magic comment identifier for finding and updating existing comments
-    const magicCommentId = `<!-- webpack-bundle-diff-comment:${pullRequestId} -->`;
-
     let body: string;
     if (numberOfChanges === 0) {
       body = [
@@ -265,12 +264,12 @@ async function run() {
 
         '---',
 
-        `Last updated for commit [${headSha.slice(
-          0,
-          7,
-        )}](https://github.com/${owner}/${repo}/commit/${headSha}). This comment will update as new commits are pushed.`,
-
-        magicCommentId,
+        renderCommitFooter({
+          headSha,
+          owner,
+          repo,
+          pullRequestId,
+        }),
       ].join('\n');
     } else {
       body = [
@@ -378,12 +377,12 @@ async function run() {
 
         '---',
 
-        `Last updated for commit [${headSha.slice(
-          0,
-          7,
-        )}](https://github.com/${owner}/${repo}/commit/${headSha}). This comment will update as new commits are pushed.`,
-
-        magicCommentId,
+        renderCommitFooter({
+          headSha,
+          owner,
+          repo,
+          pullRequestId,
+        }),
       ].join('\n');
     }
 
@@ -405,9 +404,7 @@ async function run() {
 
       const existingComment = comments.data.find(
         (comment) =>
-          comment.body?.includes(
-            `<!-- webpack-bundle-diff-comment:${pullRequestId} -->`,
-          ),
+          comment.body?.includes(createMagicCommentId(pullRequestId)),
       );
 
       if (existingComment) {
