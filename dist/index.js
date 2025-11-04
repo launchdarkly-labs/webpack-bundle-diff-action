@@ -375,10 +375,11 @@ async function run() {
             const meaningfulNegligibleChanges = diff.chunks.negligible.filter((asset) => Math.abs(asset.delta) > 1000);
             return meaningfulNegligibleChanges.length > 0;
         };
+        // Magic comment identifier for finding and updating existing comments
+        const magicCommentId = `<!-- webpack-bundle-diff-comment:${pullRequestId} -->`;
         let body;
         if (numberOfChanges === 0) {
             body = [
-                commitMessage,
                 `No significant bundle changes for ${(0, render_1.renderGithubCompareLink)(baseSha, headSha)}.`,
                 (0, render_1.renderCollapsibleSection)({
                     title: `${diff.chunks.negligible.filter((asset) => Math.abs(asset.ratio) > 0.0001).length} ${(0, render_1.pluralize)(diff.chunks.negligible.length, 'bundle', 'bundles')} changed by less than ${(0, render_1.formatThresholds)(inputs.percentChangeMinimum, inputs.sizeChangeMinimum)} 🧐`,
@@ -394,12 +395,12 @@ async function run() {
                     children: (0, render_1.renderLongTermCachingSummary)({ diff }),
                 }),
                 '---',
-                `[Visit the workflow page](https://github.com/launchdarkly/gonfalon/actions/runs/${runId}) to download the artifacts for this run. You can visualize those with [webpack-bundle-analyzer](https://github.com/webpack-contrib/webpack-bundle-analyzer) or online with [statoscope](https://statoscope.tech/).`,
+                `Last updated for commit [${headSha.slice(0, 7)}](https://github.com/${owner}/${repo}/commit/${headSha}). This comment will update as new commits are pushed.`,
+                magicCommentId,
             ].join('\n');
         }
         else {
             body = [
-                commitMessage,
                 `### Comparing bundles sizes for ${(0, render_1.renderGithubCompareLink)(baseSha, headSha)}`,
                 'Sizes are minified bytes, and not gzipped.',
                 (0, render_1.renderSection)({
@@ -454,7 +455,8 @@ async function run() {
                     shouldGateFailures: Boolean(inputs.shouldGateFailures),
                 }),
                 '---',
-                `[Visit the workflow page](https://github.com/launchdarkly/gonfalon/actions/runs/${runId}) to download the artifacts for this run. You can visualize those with [webpack-bundle-analyzer](https://github.com/webpack-contrib/webpack-bundle-analyzer) or online with [statoscope](https://statoscope.tech/).`,
+                `Last updated for commit [${headSha.slice(0, 7)}](https://github.com/${owner}/${repo}/commit/${headSha}). This comment will update as new commits are pushed.`,
+                magicCommentId,
             ].join('\n');
         }
         // Skip comment posting if configured to do so and there are no significant changes
@@ -463,12 +465,36 @@ async function run() {
             core.info('Skipping PR comment as there are no significant bundle changes');
         }
         else {
-            await octokit.rest.issues.createComment({
+            // Find existing comment with our magic identifier
+            const comments = await octokit.rest.issues.listComments({
                 owner,
                 repo,
                 issue_number: pullRequestId,
-                body,
             });
+            const existingComment = comments.data.find((comment) => {
+                var _a;
+                return (_a = comment.body) === null || _a === void 0 ? void 0 : _a.includes(`<!-- webpack-bundle-diff-comment:${pullRequestId} -->`);
+            });
+            if (existingComment) {
+                // Update existing comment
+                await octokit.rest.issues.updateComment({
+                    owner,
+                    repo,
+                    comment_id: existingComment.id,
+                    body,
+                });
+                core.info(`Updated existing comment ${existingComment.id}`);
+            }
+            else {
+                // Create new comment
+                const newComment = await octokit.rest.issues.createComment({
+                    owner,
+                    repo,
+                    issue_number: pullRequestId,
+                    body,
+                });
+                core.info(`Created new comment ${newComment.data.id}`);
+            }
         }
         if (diff.chunks.violations.length === 0) {
             const violationlabels = await octokit.rest.issues.listLabelsOnIssue({
