@@ -111,7 +111,7 @@ function getDiff(analysis, { percentChangeMinimum, bundleBudgets, sizeChangeMini
             diff.totalBytes.base += baseSize;
             diff.totalBytes.head += headSize;
             // Check if change meets both percentage and size thresholds for significance
-            const meetsPercentThreshold = Math.abs(ratio) > percentChangeMinimum;
+            const meetsPercentThreshold = Math.abs(ratio) >= percentChangeMinimum;
             const meetsSizeThreshold = sizeChangeMinimum
                 ? Math.abs(delta) >= sizeChangeMinimum
                 : true;
@@ -612,6 +612,13 @@ const formatRatio = (ratio, { minimumFractionDigits = 0, maximumFractionDigits =
     maximumFractionDigits,
 });
 exports.formatRatio = formatRatio;
+/**
+ * Formats threshold values for percent and size changes as a human-readable string.
+ *
+ * @param percentChangeMinimum - The minimum percent change threshold to format.
+ * @param sizeChangeMinimum - (Optional) The minimum size change threshold to format, in bytes.
+ * @returns A string representing the formatted percent change threshold, or both percent and size thresholds if both are provided.
+ */
 const formatThresholds = (percentChangeMinimum, sizeChangeMinimum) => {
     const percentText = (0, exports.formatRatio)(percentChangeMinimum);
     if (sizeChangeMinimum === undefined) {

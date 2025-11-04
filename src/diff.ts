@@ -177,7 +177,7 @@ export function getDiff(
       diff.totalBytes.head += headSize;
 
       // Check if change meets both percentage and size thresholds for significance
-      const meetsPercentThreshold = Math.abs(ratio) > percentChangeMinimum;
+      const meetsPercentThreshold = Math.abs(ratio) >= percentChangeMinimum;
       const meetsSizeThreshold = sizeChangeMinimum
         ? Math.abs(delta) >= sizeChangeMinimum
         : true;

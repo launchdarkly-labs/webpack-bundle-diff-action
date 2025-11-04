@@ -56,6 +56,13 @@ export const formatRatio = (
     maximumFractionDigits,
   });
 
+/**
+ * Formats threshold values for percent and size changes as a human-readable string.
+ *
+ * @param percentChangeMinimum - The minimum percent change threshold to format.
+ * @param sizeChangeMinimum - (Optional) The minimum size change threshold to format, in bytes.
+ * @returns A string representing the formatted percent change threshold, or both percent and size thresholds if both are provided.
+ */
 export const formatThresholds = (
   percentChangeMinimum: number,
   sizeChangeMinimum?: number,
