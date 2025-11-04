@@ -374,8 +374,8 @@ describe('labeling logic', () => {
 // Test input validation
 describe('input processing', () => {
   it('should parse float diff threshold correctly', () => {
-    const diffThresholdInput = '0.02';
-    const parsed = parseFloat(diffThresholdInput);
+    const percentChangeMinimumInput = '0.02';
+    const parsed = parseFloat(percentChangeMinimumInput);
     expect(parsed).toBe(0.02);
     expect(typeof parsed).toBe('number');
   });

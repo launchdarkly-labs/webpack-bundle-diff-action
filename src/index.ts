@@ -15,6 +15,7 @@ import {
   renderNegligibleTable,
   pluralize,
   formatRatio,
+  formatThresholds,
   renderGithubCompareLink,
   renderCommitSummary,
   renderLongTermCachingSummary,
@@ -57,7 +58,8 @@ async function run() {
     }
 
     const inputs = {
-      diffThreshold: parseFloat(core.getInput('diff-threshold')),
+      percentChangeMinimum: parseFloat(core.getInput('percent-change-minimum')),
+      sizeChangeMinimum: parseInt(core.getInput('size-change-minimum')),
       increaseLabel: core.getInput('increase-label'),
       decreaseLabel: core.getInput('decrease-label'),
       violationLabel: core.getInput('violation-label'),
@@ -88,8 +90,11 @@ async function run() {
     if (!inputs.githubToken) {
       throw new Error('github-token is required but not provided');
     }
-    if (isNaN(inputs.diffThreshold) || inputs.diffThreshold < 0) {
-      throw new Error('diff-threshold must be a non-negative number');
+    if (isNaN(inputs.percentChangeMinimum) || inputs.percentChangeMinimum < 0) {
+      throw new Error('percent-change-minimum must be a non-negative number');
+    }
+    if (isNaN(inputs.sizeChangeMinimum) || inputs.sizeChangeMinimum < 0) {
+      throw new Error('size-change-minimum must be a non-negative number');
     }
 
     const runId = github.context.runId;
@@ -182,8 +187,9 @@ async function run() {
     };
 
     const diff = getDiff(analysis, {
-      diffThreshold: inputs.diffThreshold,
+      percentChangeMinimum: inputs.percentChangeMinimum,
       bundleBudgets: inputs.bundleBudgets,
+      sizeChangeMinimum: inputs.sizeChangeMinimum,
     });
     core.info(JSON.stringify(diff.chunks));
 
@@ -237,7 +243,10 @@ async function run() {
             diff.chunks.negligible.length,
             'bundle',
             'bundles',
-          )} changed by less than ${formatRatio(inputs.diffThreshold)} 🧐`,
+          )} changed by less than ${formatThresholds(
+            inputs.percentChangeMinimum,
+            inputs.sizeChangeMinimum,
+          )} 🧐`,
           isEmpty: diff.chunks.negligible.length === 0,
           children: renderNegligibleTable({
             assets: diff.chunks.negligible.filter(
@@ -338,7 +347,10 @@ async function run() {
             diff.chunks.negligible.length,
             'bundle',
             'bundles',
-          )} changed by less than ${formatRatio(inputs.diffThreshold)} 🧐`,
+          )} changed by less than ${formatThresholds(
+            inputs.percentChangeMinimum,
+            inputs.sizeChangeMinimum,
+          )} 🧐`,
           isEmpty: diff.chunks.negligible.length === 0,
           children: renderNegligibleTable({
             assets: diff.chunks.negligible.filter(

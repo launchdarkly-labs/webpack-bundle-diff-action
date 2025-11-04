@@ -14,6 +14,7 @@ import {
   pluralize,
   renderViolationsTable,
   renderViolationSection,
+  formatThresholds,
 } from './render';
 
 const diff = getDiff(
@@ -25,7 +26,7 @@ const diff = getDiff(
       report: require('../head-webpack-bundle-analyzer-report.json'),
     },
   },
-  { diffThreshold: 0.05 },
+  { percentChangeMinimum: 0.05 },
 );
 
 test('section', () => {
@@ -52,7 +53,7 @@ const violationDiff = getDiff(
     },
   },
   {
-    diffThreshold: 0.05,
+    percentChangeMinimum: 0.05,
     bundleBudgets: [{ name: 'common.js', budget: 10 }],
   },
 );
@@ -257,7 +258,7 @@ describe('getDiff function edge cases', () => {
           report: require('../head-webpack-bundle-analyzer-report.json'),
         },
       },
-      { diffThreshold: 0.001 }, // Very low threshold
+      { percentChangeMinimum: 0.001 }, // Very low threshold
     );
 
     const result2 = getDiff(
@@ -269,7 +270,7 @@ describe('getDiff function edge cases', () => {
           report: require('../head-webpack-bundle-analyzer-report.json'),
         },
       },
-      { diffThreshold: 0.5 }, // Very high threshold
+      { percentChangeMinimum: 0.5 }, // Very high threshold
     );
 
     // Lower threshold should result in fewer negligible changes
@@ -289,7 +290,7 @@ describe('getDiff function edge cases', () => {
         },
       },
       {
-        diffThreshold: 0.05,
+        percentChangeMinimum: 0.05,
         bundleBudgets: [
           { name: 'common.js', budget: 10 },
           { name: 'nonexistent.js', budget: 5 }, // Should not cause issues
@@ -314,12 +315,132 @@ describe('getDiff function edge cases', () => {
           report: require('../head-webpack-bundle-analyzer-report.json'),
         },
       },
-      { diffThreshold: 0.05 },
+      { percentChangeMinimum: 0.05 },
     );
 
     expect(typeof result.totalBytes.base).toBe('number');
     expect(typeof result.totalBytes.head).toBe('number');
     expect(result.totalBytes.base).toBeGreaterThan(0);
     expect(result.totalBytes.head).toBeGreaterThan(0);
+  });
+
+  test('should require both percent and size thresholds to be significant', () => {
+    // Create mock data with a 5% change on 10KB file = 500 byte change
+    const mockBaseReport = [
+      {
+        label: 'main.abc123.js',
+        isAsset: true,
+        gzipSize: 5000,
+        statSize: 10000,
+        parsedSize: 10000,
+      },
+    ];
+
+    const mockHeadReport = [
+      {
+        label: 'main.def456.js',
+        isAsset: true,
+        gzipSize: 5500,
+        statSize: 10500,
+        parsedSize: 10500, // 500 byte increase (5% change)
+      },
+    ];
+
+    // With only percent threshold - should categorize as bigger (5% exceeds 1%)
+    const resultOnlyPercent = getDiff(
+      {
+        base: { report: mockBaseReport },
+        head: { report: mockHeadReport },
+      },
+      { percentChangeMinimum: 0.01 }, // 1% threshold, no size threshold
+    );
+
+    // With both thresholds - should be negligible (fails size threshold)
+    const resultBothThresholds = getDiff(
+      {
+        base: { report: mockBaseReport },
+        head: { report: mockHeadReport },
+      },
+      {
+        percentChangeMinimum: 0.01, // 1% threshold (passes)
+        sizeChangeMinimum: 1000, // 1000 byte minimum (fails - change is only 500 bytes)
+      },
+    );
+
+    expect(resultOnlyPercent.chunks.bigger.length).toBe(1);
+    expect(resultBothThresholds.chunks.bigger.length).toBe(0);
+    expect(resultBothThresholds.chunks.negligible.length).toBe(1);
+  });
+
+  test('should report changes that exceed both thresholds', () => {
+    // Create mock data with a large change (5000 bytes, 5% increase)
+    const mockBaseReport = [
+      {
+        label: 'main.abc123.js',
+        isAsset: true,
+        gzipSize: 50000,
+        statSize: 100000,
+        parsedSize: 100000,
+      },
+    ];
+
+    const mockHeadReport = [
+      {
+        label: 'main.def456.js',
+        isAsset: true,
+        gzipSize: 55000,
+        statSize: 105000,
+        parsedSize: 105000, // 5000 byte increase (5% change)
+      },
+    ];
+
+    const result = getDiff(
+      {
+        base: { report: mockBaseReport },
+        head: { report: mockHeadReport },
+      },
+      {
+        percentChangeMinimum: 0.01, // 1% threshold (passes - 5% > 1%)
+        sizeChangeMinimum: 2000, // 2000 byte minimum (passes - 5000 > 2000)
+      },
+    );
+
+    expect(result.chunks.bigger.length).toBe(1);
+    expect(result.chunks.negligible.length).toBe(0);
+  });
+
+  test('should work without size threshold specified', () => {
+    const result = getDiff(
+      {
+        base: {
+          report: require('../base-webpack-bundle-analyzer-report.json'),
+        },
+        head: {
+          report: require('../head-webpack-bundle-analyzer-report.json'),
+        },
+      },
+      { percentChangeMinimum: 0.05 }, // No sizeChangeMinimum specified
+    );
+
+    // Should work normally without errors - only percent threshold applies
+    expect(result).toHaveProperty('chunks');
+    expect(result.chunks).toHaveProperty('bigger');
+    expect(result.chunks).toHaveProperty('smaller');
+    expect(result.chunks).toHaveProperty('negligible');
+  });
+});
+
+// Test the new formatThresholds function
+describe('formatThresholds', () => {
+  test('should format percent threshold only', () => {
+    expect(formatThresholds(0.05)).toBe('5%');
+  });
+
+  test('should format both percent and size thresholds', () => {
+    expect(formatThresholds(0.05, 2000)).toBe('5% and 2 kB');
+  });
+
+  test('should handle zero size threshold', () => {
+    expect(formatThresholds(0.03, 0)).toBe('3% and 0 kB');
   });
 });
