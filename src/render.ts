@@ -504,3 +504,44 @@ export function renderViolationWarning({
     );
   }
 }
+
+/**
+ * Renders the footer with commit information and magic comment identifier.
+ *
+ * @param headSha - The commit SHA to display
+ * @param owner - The repository owner
+ * @param repo - The repository name
+ * @param pullRequestId - The pull request number
+ * @returns The footer markdown with commit info and magic comment
+ */
+export function renderCommitFooter({
+  headSha,
+  owner,
+  repo,
+  pullRequestId,
+}: {
+  headSha: string;
+  owner: string;
+  repo: string;
+  pullRequestId: number;
+}): string {
+  const magicCommentId = `<!-- webpack-bundle-diff-comment:${pullRequestId} -->`;
+  return [
+    `Last updated for commit [${headSha.slice(
+      0,
+      7,
+    )}](https://github.com/${owner}/${repo}/commit/${headSha}). This comment will update as new commits are pushed.`,
+    '',
+    magicCommentId,
+  ].join('\n');
+}
+
+/**
+ * Creates the magic comment identifier for finding existing PR comments.
+ *
+ * @param pullRequestId - The pull request number
+ * @returns The magic comment HTML identifier
+ */
+export function createMagicCommentId(pullRequestId: number): string {
+  return `<!-- webpack-bundle-diff-comment:${pullRequestId} -->`;
+}
