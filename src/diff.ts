@@ -176,7 +176,6 @@ export function getDiff(
       const meetsPercentThreshold = Math.abs(ratio) >= percentChangeMinimum;
       const meetsSizeThreshold = sizeChangeMinimum ? Math.abs(delta) >= sizeChangeMinimum : true;
       const isSignificant = meetsPercentThreshold && meetsSizeThreshold;
-      
       if (ratio > 0 && isSignificant) {
         // Bigger - passes both thresholds for increase
         diff.chunks.bigger.push(d);
