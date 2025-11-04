@@ -1,8 +1,8 @@
 name: 'Webpack stats diff'
 description: 'Adds a comment to your pull request with a summary of webpack stats changes between two builds'
 inputs:
-  diff-threshold:
-    description: 'Report any change in bundle size if it changed by more than "diff-threshold"'
+  percent-change-minimum:
+    description: 'Report bundle size changes as significant if they exceed this percentage (0.05 = 5%)'
     required: true
     default: '.05'
   increase-label:
@@ -33,6 +33,10 @@ inputs:
     description: 'Skip posting PR comment when there are no significant bundle changes'
     required: false
     default: 'false'
+  size-change-minimum:
+    description: 'Report bundle size changes as significant if they exceed this byte amount (filters out tiny changes due to rounding)'
+    required: false
+    default: '2000'
 
 runs:
   using: 'node12'

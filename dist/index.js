@@ -38,7 +38,7 @@ exports.parseAssetName = parseAssetName;
  * @param options - Configuration options including diff threshold and bundle budgets
  * @returns Diff object containing categorized asset changes and total byte differences
  */
-function getDiff(analysis, { diffThreshold, bundleBudgets, }) {
+function getDiff(analysis, { percentChangeMinimum, bundleBudgets, sizeChangeMinimum, }) {
     const processReportItems = (report, label) => {
         const processed = report
             .map((item) => {
@@ -110,16 +110,20 @@ function getDiff(analysis, { diffThreshold, bundleBudgets, }) {
             };
             diff.totalBytes.base += baseSize;
             diff.totalBytes.head += headSize;
-            if (ratio > diffThreshold) {
-                // Bigger
+            // Check if change meets both percentage and size thresholds for significance
+            const meetsPercentThreshold = Math.abs(ratio) > percentChangeMinimum;
+            const meetsSizeThreshold = sizeChangeMinimum ? Math.abs(delta) >= sizeChangeMinimum : true;
+            const isSignificant = meetsPercentThreshold && meetsSizeThreshold;
+            if (ratio > 0 && isSignificant) {
+                // Bigger - passes both thresholds for increase
                 diff.chunks.bigger.push(d);
             }
-            else if (ratio < -1 * diffThreshold) {
-                // Smaller
+            else if (ratio < 0 && isSignificant) {
+                // Smaller - passes both thresholds for decrease  
                 diff.chunks.smaller.push(d);
             }
             else {
-                // Negligible
+                // Negligible - fails either percentage threshold OR size threshold (or both)
                 diff.chunks.negligible.push(d);
             }
         }
@@ -236,7 +240,8 @@ async function run() {
             throw new Error(`This action only supports pull requests. ${github.context.eventName} events are not supported.`);
         }
         const inputs = {
-            diffThreshold: parseFloat(core.getInput('diff-threshold')),
+            percentChangeMinimum: parseFloat(core.getInput('percent-change-minimum')),
+            sizeChangeMinimum: parseInt(core.getInput('size-change-minimum')),
             increaseLabel: core.getInput('increase-label'),
             decreaseLabel: core.getInput('decrease-label'),
             violationLabel: core.getInput('violation-label'),
@@ -261,8 +266,11 @@ async function run() {
         if (!inputs.githubToken) {
             throw new Error('github-token is required but not provided');
         }
-        if (isNaN(inputs.diffThreshold) || inputs.diffThreshold < 0) {
-            throw new Error('diff-threshold must be a non-negative number');
+        if (isNaN(inputs.percentChangeMinimum) || inputs.percentChangeMinimum < 0) {
+            throw new Error('percent-change-minimum must be a non-negative number');
+        }
+        if (isNaN(inputs.sizeChangeMinimum) || inputs.sizeChangeMinimum < 0) {
+            throw new Error('size-change-minimum must be a non-negative number');
         }
         const runId = github.context.runId;
         const owner = github.context.repo.owner;
@@ -337,8 +345,9 @@ async function run() {
             },
         };
         const diff = (0, diff_1.getDiff)(analysis, {
-            diffThreshold: inputs.diffThreshold,
+            percentChangeMinimum: inputs.percentChangeMinimum,
             bundleBudgets: inputs.bundleBudgets,
+            sizeChangeMinimum: inputs.sizeChangeMinimum,
         });
         core.info(JSON.stringify(diff.chunks));
         // Optimize change counting with direct property access
@@ -370,7 +379,7 @@ async function run() {
                 commitMessage,
                 `No significant bundle changes for ${(0, render_1.renderGithubCompareLink)(baseSha, headSha)}.`,
                 (0, render_1.renderCollapsibleSection)({
-                    title: `${diff.chunks.negligible.filter((asset) => Math.abs(asset.ratio) > 0.0001).length} ${(0, render_1.pluralize)(diff.chunks.negligible.length, 'bundle', 'bundles')} changed by less than ${(0, render_1.formatRatio)(inputs.diffThreshold)} 🧐`,
+                    title: `${diff.chunks.negligible.filter((asset) => Math.abs(asset.ratio) > 0.0001).length} ${(0, render_1.pluralize)(diff.chunks.negligible.length, 'bundle', 'bundles')} changed by less than ${(0, render_1.formatThresholds)(inputs.percentChangeMinimum, inputs.sizeChangeMinimum)} 🧐`,
                     isEmpty: diff.chunks.negligible.length === 0,
                     children: (0, render_1.renderNegligibleTable)({
                         assets: diff.chunks.negligible.filter((asset) => Math.abs(asset.ratio) > 0.0001),
@@ -425,7 +434,7 @@ async function run() {
                     children: (0, render_1.renderRemovedTable)({ assets: diff.chunks.removed }),
                 }),
                 (0, render_1.renderCollapsibleSection)({
-                    title: `${diff.chunks.negligible.filter((asset) => Math.abs(asset.ratio) > 0.0001).length} ${(0, render_1.pluralize)(diff.chunks.negligible.length, 'bundle', 'bundles')} changed by less than ${(0, render_1.formatRatio)(inputs.diffThreshold)} 🧐`,
+                    title: `${diff.chunks.negligible.filter((asset) => Math.abs(asset.ratio) > 0.0001).length} ${(0, render_1.pluralize)(diff.chunks.negligible.length, 'bundle', 'bundles')} changed by less than ${(0, render_1.formatThresholds)(inputs.percentChangeMinimum, inputs.sizeChangeMinimum)} 🧐`,
                     isEmpty: diff.chunks.negligible.length === 0,
                     children: (0, render_1.renderNegligibleTable)({
                         assets: diff.chunks.negligible.filter((asset) => Math.abs(asset.ratio) > 0.0001),
@@ -572,7 +581,7 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
 Object.defineProperty(exports, "__esModule", ({ value: true }));
-exports.renderViolationWarning = exports.renderReductionCelebration = exports.renderCommitSummary = exports.renderGithubCompareLink = exports.shortSha = exports.pluralize = exports.renderUnchangedTable = exports.renderSmallerTable = exports.renderBiggerTable = exports.renderViolationsTable = exports.renderNegligibleTable = exports.renderLongTermCachingSummary = exports.renderTotalDownloadedBytesTable = exports.renderRemovedTable = exports.renderAddedTable = exports.renderSummaryTable = exports.renderCollapsibleSection = exports.renderViolationSection = exports.renderSection = exports.formatRatio = void 0;
+exports.renderViolationWarning = exports.renderReductionCelebration = exports.renderCommitSummary = exports.renderGithubCompareLink = exports.shortSha = exports.pluralize = exports.renderUnchangedTable = exports.renderSmallerTable = exports.renderBiggerTable = exports.renderViolationsTable = exports.renderNegligibleTable = exports.renderLongTermCachingSummary = exports.renderTotalDownloadedBytesTable = exports.renderRemovedTable = exports.renderAddedTable = exports.renderSummaryTable = exports.renderCollapsibleSection = exports.renderViolationSection = exports.renderSection = exports.formatThresholds = exports.formatRatio = void 0;
 const markdown_table_1 = __importDefault(__nccwpck_require__(1062));
 const sortedColumn = (name) => `${name} ▾`;
 const deltaDescending = (a, b) => Math.abs(b.delta) - Math.abs(a.delta);
@@ -601,6 +610,15 @@ const formatRatio = (ratio, { minimumFractionDigits = 0, maximumFractionDigits =
     maximumFractionDigits,
 });
 exports.formatRatio = formatRatio;
+const formatThresholds = (percentChangeMinimum, sizeChangeMinimum) => {
+    const percentText = (0, exports.formatRatio)(percentChangeMinimum);
+    if (sizeChangeMinimum === undefined) {
+        return percentText;
+    }
+    const sizeText = formatBytes(sizeChangeMinimum);
+    return `${percentText} and ${sizeText}`;
+};
+exports.formatThresholds = formatThresholds;
 function renderSection({ title, isEmpty = false, children, }) {
     return `
 #### ${title}

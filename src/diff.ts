@@ -78,9 +78,10 @@ export function getDiff(
     head: { report: BundleAnalyzerPlugin.JsonReport };
   },
   {
-    diffThreshold,
+    percentChangeMinimum,
     bundleBudgets,
-  }: { diffThreshold: number; bundleBudgets?: BundleBudget[] },
+    sizeChangeMinimum,
+  }: { percentChangeMinimum: number; bundleBudgets?: BundleBudget[]; sizeChangeMinimum?: number },
 ): Diff {
   const processReportItems = (
     report: BundleAnalyzerPlugin.JsonReport,
@@ -171,14 +172,19 @@ export function getDiff(
       diff.totalBytes.base += baseSize;
       diff.totalBytes.head += headSize;
 
-      if (ratio > diffThreshold) {
-        // Bigger
+      // Check if change meets both percentage and size thresholds for significance
+      const meetsPercentThreshold = Math.abs(ratio) > percentChangeMinimum;
+      const meetsSizeThreshold = sizeChangeMinimum ? Math.abs(delta) >= sizeChangeMinimum : true;
+      const isSignificant = meetsPercentThreshold && meetsSizeThreshold;
+      
+      if (ratio > 0 && isSignificant) {
+        // Bigger - passes both thresholds for increase
         diff.chunks.bigger.push(d);
-      } else if (ratio < -1 * diffThreshold) {
-        // Smaller
+      } else if (ratio < 0 && isSignificant) {
+        // Smaller - passes both thresholds for decrease  
         diff.chunks.smaller.push(d);
       } else {
-        // Negligible
+        // Negligible - fails either percentage threshold OR size threshold (or both)
         diff.chunks.negligible.push(d);
       }
     }

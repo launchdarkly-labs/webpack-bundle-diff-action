@@ -56,6 +56,15 @@ export const formatRatio = (
     maximumFractionDigits,
   });
 
+export const formatThresholds = (percentChangeMinimum: number, sizeChangeMinimum?: number): string => {
+  const percentText = formatRatio(percentChangeMinimum);
+  if (sizeChangeMinimum === undefined) {
+    return percentText;
+  }
+  const sizeText = formatBytes(sizeChangeMinimum);
+  return `${percentText} and ${sizeText}`;
+};
+
 export function renderSection({
   title,
   isEmpty = false,
