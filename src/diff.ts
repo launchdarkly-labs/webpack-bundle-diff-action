@@ -180,7 +180,7 @@ export function getDiff(
         // Bigger - passes both thresholds for increase
         diff.chunks.bigger.push(d);
       } else if (ratio < 0 && isSignificant) {
-        // Smaller - passes both thresholds for decrease  
+        // Smaller - passes both thresholds for decrease
         diff.chunks.smaller.push(d);
       } else {
         // Negligible - fails either percentage threshold OR size threshold (or both)
