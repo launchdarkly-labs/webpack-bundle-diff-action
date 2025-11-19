@@ -220,6 +220,92 @@ describe('skip comment logic', () => {
 
     expect(hasSignificantChanges()).toBe(true);
   });
+
+  it('should not skip comment when there is an existing comment, even with no significant changes', () => {
+    const mockDiff = {
+      chunks: {
+        added: [] as any[],
+        removed: [] as any[],
+        bigger: [] as any[],
+        smaller: [] as any[],
+        violations: [] as any[],
+        negligible: [
+          { delta: 50, name: 'small-change.js' }, // Less than 1KB threshold
+        ] as any[],
+      },
+    };
+
+    const hasSignificantChanges = (): boolean => {
+      if (mockDiff.chunks.violations.length > 0) return true;
+
+      const numberOfChanges =
+        mockDiff.chunks.added.length +
+        mockDiff.chunks.removed.length +
+        mockDiff.chunks.bigger.length +
+        mockDiff.chunks.smaller.length +
+        mockDiff.chunks.violations.length;
+
+      if (numberOfChanges > 0) return true;
+
+      const meaningfulNegligibleChanges = mockDiff.chunks.negligible.filter(
+        (asset) => Math.abs(asset.delta) > 1000,
+      );
+
+      return meaningfulNegligibleChanges.length > 0;
+    };
+
+    const skipCommentOnNoChanges = true;
+    const existingComment = { id: 12345, body: 'Previous comment' }; // Simulate existing comment
+
+    // New logic: should not skip if there's an existing comment
+    const shouldSkipComment =
+      skipCommentOnNoChanges && !hasSignificantChanges() && !existingComment;
+
+    expect(shouldSkipComment).toBe(false); // Should NOT skip because existing comment exists
+  });
+
+  it('should skip comment when no existing comment and no significant changes', () => {
+    const mockDiff = {
+      chunks: {
+        added: [] as any[],
+        removed: [] as any[],
+        bigger: [] as any[],
+        smaller: [] as any[],
+        violations: [] as any[],
+        negligible: [
+          { delta: 50, name: 'small-change.js' }, // Less than 1KB threshold
+        ] as any[],
+      },
+    };
+
+    const hasSignificantChanges = (): boolean => {
+      if (mockDiff.chunks.violations.length > 0) return true;
+
+      const numberOfChanges =
+        mockDiff.chunks.added.length +
+        mockDiff.chunks.removed.length +
+        mockDiff.chunks.bigger.length +
+        mockDiff.chunks.smaller.length +
+        mockDiff.chunks.violations.length;
+
+      if (numberOfChanges > 0) return true;
+
+      const meaningfulNegligibleChanges = mockDiff.chunks.negligible.filter(
+        (asset) => Math.abs(asset.delta) > 1000,
+      );
+
+      return meaningfulNegligibleChanges.length > 0;
+    };
+
+    const skipCommentOnNoChanges = true;
+    const existingComment = null; // No existing comment
+
+    // Should skip when no existing comment AND no significant changes
+    const shouldSkipComment =
+      skipCommentOnNoChanges && !hasSignificantChanges() && !existingComment;
+
+    expect(shouldSkipComment).toBe(true); // Should skip because no existing comment
+  });
 });
 
 // Test frontend extension detection logic

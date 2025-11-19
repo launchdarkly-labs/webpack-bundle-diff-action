@@ -386,27 +386,29 @@ async function run() {
       ].join('\n');
     }
 
-    // Skip comment posting if configured to do so and there are no significant changes
+    // Find existing comment with our magic identifier
+    const comments = await octokit.rest.issues.listComments({
+      owner,
+      repo,
+      issue_number: pullRequestId,
+    });
+
+    const existingComment = comments.data.find(
+      (comment) => comment.body?.includes(createMagicCommentId(pullRequestId)),
+    );
+
+    // Skip comment posting if configured to do so, there are no significant changes,
+    // AND there's no existing comment to update
     const shouldSkipComment =
-      inputs.skipCommentOnNoChanges && !hasSignificantChanges();
+      inputs.skipCommentOnNoChanges &&
+      !hasSignificantChanges() &&
+      !existingComment;
 
     if (shouldSkipComment) {
       core.info(
         'Skipping PR comment as there are no significant bundle changes',
       );
     } else {
-      // Find existing comment with our magic identifier
-      const comments = await octokit.rest.issues.listComments({
-        owner,
-        repo,
-        issue_number: pullRequestId,
-      });
-
-      const existingComment = comments.data.find(
-        (comment) =>
-          comment.body?.includes(createMagicCommentId(pullRequestId)),
-      );
-
       if (existingComment) {
         // Update existing comment
         await octokit.rest.issues.updateComment({
