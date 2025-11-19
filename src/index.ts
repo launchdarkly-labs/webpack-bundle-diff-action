@@ -394,15 +394,14 @@ async function run() {
     });
 
     const existingComment = comments.data.find(
-      (comment) =>
-        comment.body?.includes(createMagicCommentId(pullRequestId)),
+      (comment) => comment.body?.includes(createMagicCommentId(pullRequestId)),
     );
 
     // Skip comment posting if configured to do so, there are no significant changes,
     // AND there's no existing comment to update
     const shouldSkipComment =
-      inputs.skipCommentOnNoChanges && 
-      !hasSignificantChanges() && 
+      inputs.skipCommentOnNoChanges &&
+      !hasSignificantChanges() &&
       !existingComment;
 
     if (shouldSkipComment) {
