@@ -259,9 +259,7 @@ describe('skip comment logic', () => {
 
     // New logic: should not skip if there's an existing comment
     const shouldSkipComment =
-      skipCommentOnNoChanges &&
-      !hasSignificantChanges() &&
-      !existingComment;
+      skipCommentOnNoChanges && !hasSignificantChanges() && !existingComment;
 
     expect(shouldSkipComment).toBe(false); // Should NOT skip because existing comment exists
   });
@@ -304,9 +302,7 @@ describe('skip comment logic', () => {
 
     // Should skip when no existing comment AND no significant changes
     const shouldSkipComment =
-      skipCommentOnNoChanges &&
-      !hasSignificantChanges() &&
-      !existingComment;
+      skipCommentOnNoChanges && !hasSignificantChanges() && !existingComment;
 
     expect(shouldSkipComment).toBe(true); // Should skip because no existing comment
   });
